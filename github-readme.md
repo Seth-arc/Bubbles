@@ -13,7 +13,6 @@ Bubbles: Mind Physics is an interactive, physics-based educational game designed
 
 The game uses realistic physics simulations (gravity, momentum, collisions) to create an immersive environment where players can develop critical thinking skills while having fun. Each level introduces a different intellectual standard, challenging players to apply these concepts through innovative gameplay mechanics.
 
-> "The best way to learn is through play. For Ntiska, I wanted to create something that would feel like a game first, but secretly plant the seeds of structured thinking." — Project Creator
 
 ## ✨ Features
 

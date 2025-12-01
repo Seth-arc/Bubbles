@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubbles</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #6366F1;
+            --primary-dark: #4F46E5;
+            --primary-light: #A5B4FC;
+            --secondary-color: #10B981;
+            --secondary-dark: #059669;
+            --accent-color: #F59E0B;
+            --accent-dark: #D97706;
+            --background-color: #0F172A;
+            --text-color: #F8FAFC;
+            --text-light: #CBD5E1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        /* --- Loading Screen Styles --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            display: flex; /* Initially visible */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1; /* Initially opaque */
+            transition: opacity 1s ease; /* Transition for fade out */
+            flex-direction: column; /* Center items vertically */
+        }
+
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .brain-loader {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            width: 0%; /* Start at 0% */
+            transition: width 0.2s ease-out; /* Smooth progress update */
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.9);
+                filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+            }
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.9));
+            }
+        }
+        /* --- End Loading Screen Styles --- */
+
+
+        .splash-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1E293B 0%, #0F172A 70%);
+            opacity: 0; /* Start hidden */
+            transition: opacity 1s ease 0.5s; /* Fade in after loading */
+        }
+
+        /* 3D Space elements */
+        .space-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.7;
+            z-index: 1;
+            box-shadow: 0 0 10px white, 0 0 20px white;
+            animation: twinkle 3s infinite alternate; /* Added base animation */
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: pulse-nebula 15s infinite alternate; /* Added base animation */
+        }
+        @keyframes pulse-nebula {
+            0% { opacity: 0.1; transform: scale(0.95); }
+            100% { opacity: 0.2; transform: scale(1.05); }
+        }
+
+        /* Physics elements */
+        .physics-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .physics-object {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem; /* Made initial slightly larger */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            animation: float 6s infinite ease-in-out; /* Added base animation */
+        }
+
+        .physics-object:hover {
+            transform: scale(1.1) translateZ(20px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .physics-object::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            pointer-events: none;
+        }
+
+        .object-info {
+            position: absolute;
+            bottom: 110%; /* Position above the object */
+            left: 50%;
+            transform: translateX(-50%) translateY(10px); /* Start slightly lower */
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9rem;
+            width: 200px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: left; /* Ensure text is left-aligned */
+        }
+
+        .object-info h3 {
+            margin-bottom: 8px;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-light);
+            font-size: 1rem; /* Slightly larger heading */
+        }
+
+        .object-info p {
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-light); /* Lighter text for description */
+        }
+
+        /* Show info on hover */
+        .physics-object:hover .object-info {
+             opacity: 1;
+             transform: translateX(-50%) translateY(0); /* Move up to final position */
+        }
+
+
+        /* Content styles */
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 2rem;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.5s ease;
+        }
+
+        .logo-container {
+            position: relative;
+            perspective: 1000px;
+            margin-bottom: 2rem;
+            transform-style: preserve-3d;
+        }
+
+        .logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 5rem;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .logo-3d-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; /* Ensure it covers the main text */
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 5rem;
+            letter-spacing: -2px;
+            -webkit-text-stroke: 1px var(--primary-dark); /* Adjusted stroke */
+            color: transparent; /* Use color instead of fill */
+            opacity: 0.15; /* Adjusted opacity */
+            transform: translateZ(-15px) translateX(3px) translateY(3px); /* Adjusted 3D effect */
+            pointer-events: none; /* Prevent interaction */
+        }
+
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: var(--text-light);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            transform: translateZ(20px);
+        }
+
+        .for-ntiska {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            opacity: 0.7;
+            z-index: 20;
+        }
+
+        .for-ntiska span {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .version {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            opacity: 0.5;
+            z-index: 20;
+        }
+
+        /* Brain model container */
+        .brain-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            transform-style: preserve-3d;
+        }
+
+        .brain-model {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.04;
+            animation: rotate-brain 120s linear infinite;
+        }
+
+        @keyframes rotate-brain {
+            0% { transform: translate(-50%, -50%) scale(1.5) rotateY(0deg) rotateX(10deg); }
+            100% { transform: translate(-50%, -50%) scale(1.5) rotateY(360deg) rotateX(10deg); }
+        }
+
+        /* Button styles */
+        .buttons-container {
+            display: flex;
+            justify-content: center; /* Center buttons */
+            gap: 20px;
+            z-index: 30;
+            transform: translateZ(40px);
+        }
+
+        .start-button {
+            position: relative;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        .start-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+            z-index: -1;
+            transition: transform 0.5s ease;
+            transform: translate(-100%, -100%);
+        }
+
+        .start-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(79, 70, 229, 0.5);
+        }
+
+        .start-button:hover::before {
+            transform: translate(0, 0);
+        }
+
+        .start-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .secondary-button {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-button:hover {
+            border-color: var(--primary-light);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        /* Media queries */
+        @media (max-width: 768px) {
+            .logo-text, .logo-3d-effect {
+                font-size: 3rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                 max-width: 90%; /* Adjust max width */
+            }
+
+            .buttons-container {
+                flex-direction: column;
+                align-items: center; /* Center buttons in column */
+                gap: 15px; /* Adjust gap */
+            }
+
+            .brain-model {
+                width: 400px;
+                height: 400px;
+                opacity: 0.03; /* Slightly reduce opacity */
+            }
+
+            .physics-object {
+                /* Adjust size and positioning for smaller screens if needed */
+                 transform: scale(0.8); /* Example scaling */
+            }
+             .object-info {
+                width: 160px; /* Smaller info box */
+                font-size: 0.8rem;
+            }
+             .object-info h3 { font-size: 0.9rem; }
+             .object-info p { font-size: 0.75rem; }
+
+            .skill-selector {
+                top: 10px;
+                right: 10px;
+            }
+             .sound-toggle {
+                top: 10px;
+                left: 10px;
+            }
+        }
+
+         @media (max-width: 480px) {
+             .logo-text, .logo-3d-effect {
+                font-size: 2.5rem;
+            }
+             .subtitle {
+                font-size: 1rem;
+            }
+             .start-button { font-size: 1rem; padding: 12px 30px; }
+             .secondary-button { font-size: 0.9rem; padding: 10px 25px; }
+
+             .physics-object {
+                 /* Further adjustments if needed */
+                 font-size: 1.2rem;
+             }
+         }
+
+        /* Skill level selector */
+        .skill-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skill-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .skill-options {
+            display: flex;
+            background: rgba(15, 23, 42, 0.7); /* Slightly more opaque */
+            border-radius: 20px;
+            padding: 4px; /* Increased padding */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
+        }
+
+        .skill-option {
+            padding: 6px 14px; /* Increased padding */
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500; /* Slightly bolder */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-light); /* Default color */
+        }
+
+        .skill-option.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); /* Glow effect */
+        }
+        .skill-option:not(.active):hover {
+             background: rgba(255, 255, 255, 0.1); /* Hover effect */
+             color: white;
+        }
+
+        /* Sound toggle */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.7); /* Match skill selector */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Subtle shadow */
+        }
+
+        .sound-toggle:hover {
+            background: rgba(99, 102, 241, 0.3); /* Hover effect */
+            transform: scale(1.1); /* Slight scale on hover */
+        }
+
+        .sound-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-light);
+            transition: fill 0.3s ease;
+        }
+        .sound-toggle.active svg {
+             fill: var(--primary-light); /* Indicate active state */
+        }
+
+        /* Keyframes */
+        @keyframes float {
+            0% {
+                transform: translateY(0px) translateX(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-15px) translateX(8px) rotate(4deg); /* Reduced movement */
+            }
+            100% {
+                transform: translateY(0px) translateX(0px) rotate(0deg);
+            }
+        }
+
+        /* Neuron connection animation */
+        .neuron-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .connection {
+            position: absolute;
+            height: 1px; /* Thinner lines */
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.6), transparent); /* Adjusted gradient */
+            transform-origin: left center;
+            opacity: 0.2;
+            z-index: 1;
+            animation: trail 3s infinite linear; /* Added base animation */
+        }
+        @keyframes trail {
+            0% { width: 0%; opacity: 0; }
+            50% { opacity: 0.4; }
+            100% { width: 100%; opacity: 0; }
+        }
+
+
+        .connection::after {
+            content: '';
+            position: absolute;
+            width: 5px; /* Smaller node */
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            box-shadow: 0 0 8px var(--primary-light); /* Added glow */
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            animation: pulse-node 3s infinite ease-in-out;
+            /* Animation delay is set in JS */
+        }
+
+        @keyframes pulse-node {
+            0%, 100% {
+                transform: translateY(-50%) scale(0);
+                opacity: 0;
+            }
+            20%, 80% { /* Adjusted timing for pulse */
+                transform: translateY(-50%) scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Modal Styles Enhancement */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+        }
+
+        #modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0s linear 0s;
+        }
+
+        #modal-content {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 550px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #modal-overlay.visible #modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        #modal-content h2 {
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        #modal-content p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            line-height: 1.7;
+            font-size: 1.05rem;
+            text-align: center;
+        }
+
+        #modal-content h3 {
+            color: var(--primary-light);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.4rem;
+            margin: 25px 0 15px;
+            position: relative;
+            padding-bottom: 8px;
+        }
+
+        #modal-content h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), transparent);
+            border-radius: 3px;
+        }
+
+        /* Enhanced image container */
+        .ntsika-image-container {
+            text-align: center;
+            margin: 25px auto 35px;
+            max-width: 260px;
+            position: relative;
+        }
+
+        .ntsika-image {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(99, 102, 241, 0.6);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform: rotate(-2deg);
+        }
+
+        .ntsika-image:hover {
+            transform: rotate(0deg) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .ntsika-caption {
+            margin-top: 16px;
+            font-size: 0.95rem;
+            color: var(--text-light);
+            font-style: italic;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        /* Controls list style */
+        #modal-content ul {
+            padding-left: 5px;
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        #modal-content li {
+            color: var(--text-light);
+            margin-bottom: 10px;
+            line-height: 1.6;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        #modal-content li::before {
+            content: '→';
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* Skills grid enhancement */
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .skill-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            margin: 0;
+            flex: 0 0 auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .skill-item:hover {
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Close button enhancement */
+        #close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            line-height: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        #close-modal:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: rotate(90deg);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Loading screen -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loader">
+            <!-- Re-using the brain SVG for the loader -->
+            <svg class="brain-loader" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M208 352c-2.39 0-4.78-.35-7.06-1.05-6.92-2.12-12.04-7.64-13.64-14.71-1.6-7.07.27-14.36 5.02-19.36l25.88-27.26c5.13-5.42 7.95-12.41 7.95-19.67v-28.01l-24.61 23.57c-4.55 4.32-10.3 6.68-16.52 6.68-7.34 0-14.21-3.32-18.76-9.1-8.5-10.82-6.34-26.68 4.82-35.37L256 176v-16c0-20.12-11.55-38.43-29.5-47.16-4.51-2.14-8.89-4.34-13.13-6.58C185.92 93.4 163.5 84.59 128 80l-14.6 11.69C107.94 95.74 100.87 99 93.64 99c-5.2 0-10.26-1.46-14.64-4.22C70.41 89.5 65.95 80.51 66 70.66c.05-9.84 4.62-18.78 13.33-23.99l.79-.53C132.7 19.55 184.9 21.59 236.2 26.75c5.14.52 10.3 1.11 15.46 1.75 17.37 2.5 32.79 11.89 43.29 26.48 3.11 4.47 9.63 4.86 13.22.82 14.92-16.72 37.14-25.13 59.04-22.24 39.4 5.33 76.69 28.66 98.16 61.68 1.78 2.61 4.25 4.62 7.14 5.79 58.07 26.23 36.2 104.74-29.51 104.74-6.62 0-13.2-1.1-19.5-3.25-3.03 19.64-11.34 37.95-24.13 52.69-1.21 1.45-2.58 2.76-4.12 3.86-28.73 21.52-71.1 18.83-96.55-7.11-2.9 3.89-6.17 7.5-9.8 10.83-10.53 9.82-22.89 17.39-36.55 22.4v40.09c0 5.92-3.25 11.36-8.47 14.16-3.04 1.64-6.33 2.31-9.53 2.31z" fill="var(--primary-color)"/>
+                <path d="M416 344c-5.22 0-10.48-1.25-15.35-3.75C391 334.5 384 325.03 384 314.24V288h-16c-14.23 0-27.31-7.68-34.3-20.07-6.99-12.4-6.74-27.42.67-39.57l4.46-7.43C328.32 207.8 321.37 194.7 312 184c-10.25 7.58-22.9 12-36 12-20.43 0-39.49-10.12-50.76-27.17-2.86-3.17-5.39-6.69-7.74-10.59-6.65 4.9-14.85 7.76-23.5 7.76-22.06 0-40-17.94-40-40 0-5.55 1.14-10.86 3.24-15.71-5.3-1.14-10.59-2.37-15.88-3.67-12.41-2.39-25.28-4.87-38.36-6.46-7.17 11.97-20.45 20-35.26 20-22.06 0-40-17.93-40-40 0-17.16 10.87-32.62 27.02-38.3 1.1-.74 2.26-1.44 3.46-2.1 69.56-45.31 162.96-43.73 246.63-33.7 7.91.94 15.84 2.02 23.77 3.21 8.71 1.49 16.99 5.19 24.03 10.8 2.36-12.36 12.05-22.05 24.42-24.41C402.59 9.22 428.27 0 445.68 0 480.25 0 512 31.75 512 66.33c0 18.27-7.6 34.8-19.81 46.72 8.8 34.89-10.87 36.95-28.19 36.95-3.63 0-7.32-.37-11.03-1.14-8.92 76.15-87.97 110.14-120.97 110.14-14.02 0-27.12-4.17-35.5-11.29.5 1.72.78 3.54.78 5.42 0 10.55-8.58 19.13-19.14 19.13h-25.14v17.71c0 15.28-8.01 29.53-20.96 37.21-5.74 3.43-12.02 5.05-18.11 5.05-4.72 0-9.42-.94-13.81-2.82-8.92 12.65-23.3 20.82-39.49 20.82-6.98 0-13.62-1.48-19.62-4.13C134.6 358.69 128 372.38 128 387.31V412c0 21.06-14.56 39.06-35.16 43.54C91.58 455.82 90.3 456 89 456c-23.17 0-41-18.76-41-41 0-22.07 17.9-40 40-40 2.73 0 5.46.27 8.08.83 2.85-12.52 13.69-21.95 26.99-22.78 1.17-.07 2.3-.05 3.5-.05.78 0 1.57-.01 2.35-.01 8.47 0 16.72-1.41 24.48-4.19 9.47-3.38 18.01-8.83 25.35-16.17L192 320h32v40c0 11.99 8.41 22.31 20.09 24.63 4.84.94 9.62.44 13.91-1.45 4.28-1.89 7.59-5.08 9.64-9.13 1.44-2.99 2.24-6.31 2.3-9.72 4.13.25 8.3.05 12.47-.63 14.18-2.47 27.05-10.97 35.53-23.46.73-1.06 1.5-2.53 2.32-4.16 6.04-12.12 18.46-19.99 32.17-19.99 5.91 0 11.74 1.46 16.94 4.22 1.05-.67 2.09-1.36 3.11-2.1 4.23-3.1 7.77-6.93 10.49-11.35C372.02 300.23 358.27 296 348 296c-10.77 0-20.64 6.54-24.28 16.64-1.35 3.9-4.41 7.16-8.26 8.83-3.85 1.68-8.2 1.62-12.01-.15-3.86-1.68-6.92-4.93-8.27-8.82-1.36-3.9-.65-8.21 1.93-11.66 12.96-17.52 33.31-27.84 55.17-27.84 19.73 0 38.55 8.71 52.57 23.9 1.71 1.83 2.93 4 3.54 6.35 2.38 8.85 5 12.75 7.61 12.75 2.62 0 5.23-3.91 7.61-12.77.83-3.12 2.69-5.84 5.29-7.77 2.78-2.05 6.12-3.13 9.51-3.13 8.63 0 16.19 6.97 16.59 15.59l.02 7.87c0 4.79 3.33 8.98 8.01 10.1 4.68 1.11 9.52-.88 12.28-5.06 3.4-5.17 5.19-11.17 5.19-17.35 0-17.37-14.13-31.5-31.49-31.5h-.99c-6.51 0-12.82-2.68-17.35-7.34-4.53-4.67-6.99-10.66-6.96-16.94 2.73-.21 5.51-.31 8.3-.31 24.6 0 46.09 15.69 54.3 38.7 13.21 36.97-12.14 73.55-48.31 81.61-2.7 35.73-32.06 64.11-68.36 64.11z" fill="var(--primary-light)"/>
+            </svg>
+            <div class="loading-text" id="loading-text-element">Loading Bubbles...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Splash Screen Content (Starts hidden, fades in after loading) -->
+    <div class="splash-container" id="splash-container">
+        <!-- Sound toggle -->
+        <div class="sound-toggle" id="sound-toggle">
+            <!-- SVG for Sound Icon (Volume Up) -->
+             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="sound-icon-on">
+                <path d="M14.016 3.234C14.016 2.85 13.875 2.499 13.594 2.183C13.312 1.866 12.969 1.707 12.563 1.707C12.156 1.707 11.813 1.866 11.531 2.183L6.891 7.242H2.813C2.406 7.242 2.063 7.401 1.781 7.718C1.5 8.034 1.359 8.416 1.359 8.864V14.988C1.359 15.436 1.5 15.817 1.781 16.134C2.063 16.45 2.406 16.609 2.813 16.609H6.891L11.531 21.668C11.813 21.984 12.156 22.143 12.563 22.143C12.969 22.143 13.312 21.984 13.594 21.668C13.875 21.351 14.016 21 14.016 20.616V3.234ZM19.078 4.644C19.453 4.487 19.77 4.511 20.028 4.717C21.575 6.08 22.641 7.625 23.227 9.352C23.812 11.08 23.812 12.807 23.227 14.535C22.641 16.262 21.575 17.807 20.028 19.17C19.77 19.375 19.453 19.4 19.078 19.243C18.703 19.087 18.516 18.798 18.516 18.376C18.516 18.114 18.609 17.887 18.797 17.694C20.062 16.581 20.918 15.318 21.363 13.904C21.809 12.49 21.809 11.076 21.363 9.662C20.918 8.248 20.062 6.985 18.797 5.872C18.609 5.68 18.516 5.453 18.516 5.19C18.516 4.769 18.703 4.48 19.078 4.323V4.644ZM17.461 7.683C17.836 7.527 18.152 7.551 18.41 7.756C19.301 8.553 19.922 9.456 20.274 10.465C20.625 11.475 20.625 11.98 20.274 12.988C19.922 13.997 19.301 14.901 18.41 15.697C18.152 15.903 17.836 15.927 17.461 15.771C17.086 15.614 16.898 15.326 16.898 14.904C16.898 14.642 16.992 14.416 17.18 14.223C17.836 13.646 18.305 12.988 18.586 12.25C18.867 11.512 18.867 10.775 18.586 10.037C18.305 9.299 17.836 8.641 17.18 8.064C16.992 7.872 16.898 7.644 16.898 7.382C16.898 6.961 17.086 6.673 17.461 6.516V7.683Z"/>
+            </svg>
+             <!-- SVG for Sound Icon (Muted) - Initially hidden -->
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="sound-icon-off" style="display: none;">
+                 <path d="M14.016 3.234c0-.384-.141-.735-.422-1.051a1.39 1.39 0 0 0-1.02-.476c-.407 0-.75.159-1.031.476L6.891 7.242H2.813a1.46 1.46 0 0 0-1.047.457 1.64 1.64 0 0 0-.407.865v6.124c0 .384.137.72.407.99.27.27.605.407.99.407H6.89l4.641 4.859c.281.317.625.476 1.031.476.407 0 .75-.159 1.02-.476.281-.316.422-.667.422-1.051V3.234zm5.062 1.41L17.664 6.06a.82.82 0 0 0-.609.281c-.156.18-.21.391-.156.625.172.672.43 1.313.773 1.922l-1.437 1.437c-.344-.578-.602-1.21-.774-1.89a.76.76 0 0 0-.156-.625.82.82 0 0 0-.61-.281L13.062 6.06a.81.81 0 0 0-.843.844c0 .187.07.36.21.531l6.282 6.281c.172.172.344.242.531.211a.81.81 0 0 0 .844-.844l-1.414-1.414a.82.82 0 0 0-.281-.609c-.188-.156-.4-.21-.625-.156-.672.172-1.313.43-1.922.773l1.437 1.437c.578-.344 1.21-.602 1.89-.773a.76.76 0 0 0 .625-.156.82.82 0 0 0 .281-.61l1.414-1.414a.81.81 0 0 0-.844-.844c-.187.07-.36.21-.531.344l-6.281 6.281c-.172.172-.242.344-.211.531a.81.81 0 0 0 .844.844l1.414-1.414a.82.82 0 0 0 .609-.281c.156-.188.21-.398.156-.625-.172-.672-.43-1.313-.773-1.922l1.437-1.437c.344.578.602 1.21.773 1.89a.76.76 0 0 0 .156.625c.188.156.398.211.61.156l1.414-1.414a.81.81 0 0 0 .844-.844c-.07-.187-.21-.36-.344-.531l-6.281-6.281a.72.72 0 0 0-.531-.211.81.81 0 0 0-.844.844l1.414 1.414c.188.172.281.383.281.61 0 .187-.055.398-.156.625-.578.344-1.21.602-1.89.773l-1.437-1.437c.672-.172 1.313-.43 1.922-.773a.76.76 0 0 0 .625-.156.82.82 0 0 0 .281-.61L19.078 4.644z"/>
+            </svg>
+        </div>
+
+        <!-- Space background with stars -->
+        <div class="space-container" id="space-container">
+            <!-- Stars will be created by JavaScript -->
+        </div>
+
+        <!-- Neuron connection effects -->
+        <div class="neuron-connections" id="neuron-connections"></div>
+
+        <!-- Brain model background -->
+        <div class="brain-container">
+             <svg class="brain-model" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Paths for the brain model -->
+                <path d="M208 352c-2.39 0-4.78-.35-7.06-1.05-6.92-2.12-12.04-7.64-13.64-14.71-1.6-7.07.27-14.36 5.02-19.36l25.88-27.26c5.13-5.42 7.95-12.41 7.95-19.67v-28.01l-24.61 23.57c-4.55 4.32-10.3 6.68-16.52 6.68-7.34 0-14.21-3.32-18.76-9.1-8.5-10.82-6.34-26.68 4.82-35.37L256 176v-16c0-20.12-11.55-38.43-29.5-47.16-4.51-2.14-8.89-4.34-13.13-6.58C185.92 93.4 163.5 84.59 128 80l-14.6 11.69C107.94 95.74 100.87 99 93.64 99c-5.2 0-10.26-1.46-14.64-4.22C70.41 89.5 65.95 80.51 66 70.66c.05-9.84 4.62-18.78 13.33-23.99l.79-.53C132.7 19.55 184.9 21.59 236.2 26.75c5.14.52 10.3 1.11 15.46 1.75 17.37 2.5 32.79 11.89 43.29 26.48 3.11 4.47 9.63 4.86 13.22.82 14.92-16.72 37.14-25.13 59.04-22.24 39.4 5.33 76.69 28.66 98.16 61.68 1.78 2.61 4.25 4.62 7.14 5.79 58.07 26.23 36.2 104.74-29.51 104.74-6.62 0-13.2-1.1-19.5-3.25-3.03 19.64-11.34 37.95-24.13 52.69-1.21 1.45-2.58 2.76-4.12 3.86-28.73 21.52-71.1 18.83-96.55-7.11-2.9 3.89-6.17 7.5-9.8 10.83-10.53 9.82-22.89 17.39-36.55 22.4v40.09c0 5.92-3.25 11.36-8.47 14.16-3.04 1.64-6.33 2.31-9.53 2.31z" fill="#6366F1" fill-opacity="0.1"/>
+                <path d="M416 344c-5.22 0-10.48-1.25-15.35-3.75C391 334.5 384 325.03 384 314.24V288h-16c-14.23 0-27.31-7.68-34.3-20.07-6.99-12.4-6.74-27.42.67-39.57l4.46-7.43C328.32 207.8 321.37 194.7 312 184c-10.25 7.58-22.9 12-36 12-20.43 0-39.49-10.12-50.76-27.17-2.86-3.17-5.39-6.69-7.74-10.59-6.65 4.9-14.85 7.76-23.5 7.76-22.06 0-40-17.94-40-40 0-5.55 1.14-10.86 3.24-15.71-5.3-1.14-10.59-2.37-15.88-3.67-12.41-2.39-25.28-4.87-38.36-6.46-7.17 11.97-20.45 20-35.26 20-22.06 0-40-17.93-40-40 0-17.16 10.87-32.62 27.02-38.3 1.1-.74 2.26-1.44 3.46-2.1 69.56-45.31 162.96-43.73 246.63-33.7 7.91.94 15.84 2.02 23.77 3.21 8.71 1.49 16.99 5.19 24.03 10.8 2.36-12.36 12.05-22.05 24.42-24.41C402.59 9.22 428.27 0 445.68 0 480.25 0 512 31.75 512 66.33c0 18.27-7.6 34.8-19.81 46.72 8.8 34.89-10.87 36.95-28.19 36.95-3.63 0-7.32-.37-11.03-1.14-8.92 76.15-87.97 110.14-120.97 110.14-14.02 0-27.12-4.17-35.5-11.29.5 1.72.78 3.54.78 5.42 0 10.55-8.58 19.13-19.14 19.13h-25.14v17.71c0 15.28-8.01 29.53-20.96 37.21-5.74 3.43-12.02 5.05-18.11 5.05-4.72 0-9.42-.94-13.81-2.82-8.92 12.65-23.3 20.82-39.49 20.82-6.98 0-13.62-1.48-19.62-4.13C134.6 358.69 128 372.38 128 387.31V412c0 21.06-14.56 39.06-35.16 43.54C91.58 455.82 90.3 456 89 456c-23.17 0-41-18.76-41-41 0-22.07 17.9-40 40-40 2.73 0 5.46.27 8.08.83 2.85-12.52 13.69-21.95 26.99-22.78 1.17-.07 2.3-.05 3.5-.05.78 0 1.57-.01 2.35-.01 8.47 0 16.72-1.41 24.48-4.19 9.47-3.38 18.01-8.83 25.35-16.17L192 320h32v40c0 11.99 8.41 22.31 20.09 24.63 4.84.94 9.62.44 13.91-1.45 4.28-1.89 7.59-5.08 9.64-9.13 1.44-2.99 2.24-6.31 2.3-9.72 4.13.25 8.3.05 12.47-.63 14.18-2.47 27.05-10.97 35.53-23.46.73-1.06 1.5-2.53 2.32-4.16 6.04-12.12 18.46-19.99 32.17-19.99 5.91 0 11.74 1.46 16.94 4.22 1.05-.67 2.09-1.36 3.11-2.1 4.23-3.1 7.77-6.93 10.49-11.35C372.02 300.23 358.27 296 348 296c-10.77 0-20.64 6.54-24.28 16.64-1.35 3.9-4.41 7.16-8.26 8.83-3.85 1.68-8.2 1.62-12.01-.15-3.86-1.68-6.92-4.93-8.27-8.82-1.36-3.9-.65-8.21 1.93-11.66 12.96-17.52 33.31-27.84 55.17-27.84 19.73 0 38.55 8.71 52.57 23.9 1.71 1.83 2.93 4 3.54 6.35 2.38 8.85 5 12.75 7.61 12.75 2.62 0 5.23-3.91 7.61-12.77.83-3.12 2.69-5.84 5.29-7.77 2.78-2.05 6.12-3.13 9.51-3.13 8.63 0 16.19 6.97 16.59 15.59l.02 7.87c0 4.79 3.33 8.98 8.01 10.1 4.68 1.11 9.52-.88 12.28-5.06 3.4-5.17 5.19-11.17 5.19-17.35 0-17.37-14.13-31.5-31.49-31.5h-.99c-6.51 0-12.82-2.68-17.35-7.34-4.53-4.67-6.99-10.66-6.96-16.94 2.73-.21 5.51-.31 8.3-.31 24.6 0 46.09 15.69 54.3 38.7 13.21 36.97-12.14 73.55-48.31 81.61-2.7 35.73-32.06 64.11-68.36 64.11z" fill="#A5B4FC" fill-opacity="0.1"/>
+            </svg>
+        </div>
+
+        <!-- Physics objects container -->
+        <div class="physics-container" id="physics-container">
+            <!-- Physics objects will be created by JavaScript -->
+        </div>
+
+        <!-- Main content -->
+        <div class="content" id="main-content">
+            <div class="logo-container">
+                <div class="logo-3d-effect">Bubbles</div>
+                <h1 class="logo-text">Bubbles</h1>
+            </div>
+            <p class="subtitle">Challenge your mind with the physics of critical thinking</p>
+            <div class="buttons-container">
+                <button class="start-button" id="start-btn">Play Now</button>
+                <button class="secondary-button" id="about-btn">About</button>
+            </div>
+        </div>
+
+        <!-- Footer elements -->
+        <div class="for-ntiska"><span></span></div>
+        <div class="version">v1.0.1</div> <!-- Updated version slightly -->
+    </div>
+
+     <!-- How to Play Modal Structure -->
+    <div id="modal-overlay">
+        <div id="modal-content">
+            <h2>About Bubbles</h2>
+            <p>A physics-based game that introduces little people to the intellectual standards of critical thinking.</p>
+            
+            <div class="ntsika-image-container">
+                <img src="img/Ntsika.jpeg" alt="Ntsika" class="ntsika-image">
+                <div class="ntsika-caption">Created for Ntsika's learning journey as he starts big school.</div>
+            </div>
+
+            <button id="close-modal" aria-label="Close modal">×</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Global Variables ---
+        let soundEnabled = true; // Assume sound is on initially
+
+        // --- DOM Elements ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const progressFill = document.getElementById('progress-fill');
+        const loadingTextElement = document.getElementById('loading-text-element');
+        const splashContainer = document.getElementById('splash-container');
+        const soundToggle = document.getElementById('sound-toggle');
+        const soundIconOn = document.getElementById('sound-icon-on');
+        const soundIconOff = document.getElementById('sound-icon-off');
+        const startBtn = document.getElementById('start-btn');
+        const aboutBtn = document.getElementById('about-btn');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        // --- Initial Loading Animation ---
+        document.addEventListener('DOMContentLoaded', function() {
+            let progress = 0;
+            let loadingInterval;
+
+            const simulateLoading = () => {
+                 loadingInterval = setInterval(() => {
+                    // Simulate variable loading speed
+                    progress += Math.random() * 5 + 1; // Increment between 1 and 6
+                    progress = Math.min(progress, 100); // Cap at 100
+
+                    progressFill.style.width = `${progress}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(loadingInterval);
+                        // Ensure 100% is displayed briefly
+                        setTimeout(finishLoading, 300);
+                    }
+                }, 80); // Update progress roughly every 80ms
+            };
+
+            const finishLoading = () => {
+                 // Hide loading screen
+                loadingOverlay.style.opacity = '0';
+
+                 // After fade out animation (1s), hide completely and init splash
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    splashContainer.style.opacity = '1'; // Fade in main content
+                    initSplashScreen(); // Initialize animations and interactions
+                }, 1000); // Matches the opacity transition duration
+            };
+
+             // Start the loading simulation
+            simulateLoading();
+        });
+
+        // --- Splash Screen Initialization ---
+        function initSplashScreen() {
+            // Create space background with stars
+            createStarryBackground();
+
+            // Create interactive physics objects
+            createPhysicsObjects();
+
+            // Create neuron connections
+            createNeuronConnections();
+
+            // 3D mouse move effect
+            setupMouseMoveEffect();
+
+            // Initialize UI Elements
+            initializeUI();
+        }
+
+        // --- UI Initialization ---
+        function initializeUI() {
+            // Initialize skill selector
+            document.querySelectorAll('.skill-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Don't remove active if already active
+                    if (!option.classList.contains('active')) {
+                        document.querySelector('.skill-option.active')?.classList.remove('active');
+                        option.classList.add('active');
+                        // You could store the selected level here, e.g.,
+                        // const selectedLevel = option.dataset.level;
+                        // console.log("Level selected:", selectedLevel);
+                        playSound('skill-select'); // Play feedback sound
+                    }
+                });
+            });
+
+            // Initialize sound toggle
+            soundToggle.addEventListener('click', toggleSound);
+            updateSoundIcon(); // Set initial icon state
+
+            // Button event listeners
+            startBtn.addEventListener('click', startGame);
+            aboutBtn.addEventListener('click', showAboutModal);
+
+            // Modal close listener
+            closeModalBtn.addEventListener('click', hideAboutModal);
+            modalOverlay.addEventListener('click', (e) => {
+                 // Close if clicked outside the modal content
+                 if (e.target === modalOverlay) {
+                     hideAboutModal();
+                 }
+            });
+        }
+
+
+        // --- Background Effects ---
+        function createStarryBackground() {
+            const spaceContainer = document.getElementById('space-container');
+            if (!spaceContainer) return; // Guard clause
+
+            // Clear existing stars/nebulae if re-initializing
+            spaceContainer.innerHTML = '';
+
+            // Create stars
+            for (let i = 0; i < 120; i++) { // Increased star count
+                const star = document.createElement('div');
+                star.className = 'star';
+
+                const size = Math.random() * 2.5 + 0.5; // Size between 0.5 and 3px
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                const depth = Math.random() * 400 - 200; // Larger depth range
+                star.style.transform = `translateZ(${depth}px)`;
+                star.style.animationDelay = `${Math.random() * 5}s`; // Randomize twinkle start
+                star.style.animationDuration = `${Math.random() * 4 + 2}s`; // Vary twinkle speed
+
+                spaceContainer.appendChild(star);
+            }
+
+            // Create nebula effects
+            const nebulaColors = [
+                'rgba(99, 102, 241, 0.15)', // Primary
+                'rgba(16, 185, 129, 0.1)', // Secondary
+                'rgba(245, 158, 11, 0.08)', // Accent
+                'rgba(139, 92, 246, 0.12)' // Purple
+            ];
+
+            for (let i = 0; i < 4; i++) {
+                const nebula = document.createElement('div');
+                nebula.className = 'nebula';
+
+                const size = Math.random() * 400 + 300; // Larger nebulae
+                nebula.style.width = `${size}px`;
+                nebula.style.height = `${size}px`;
+                 // Position more towards edges sometimes
+                nebula.style.left = `${Math.random() * 120 - 10}%`; // Allow partial off-screen
+                nebula.style.top = `${Math.random() * 120 - 10}%`;
+                nebula.style.backgroundColor = nebulaColors[i % nebulaColors.length];
+                nebula.style.animationDelay = `${Math.random() * 4}s`; // Randomize pulse start
+                nebula.style.animationDuration = `${Math.random() * 10 + 12}s`; // Vary pulse speed
+
+                spaceContainer.appendChild(nebula);
+            }
+        }
+
+        function createNeuronConnections() {
+            const container = document.getElementById('neuron-connections');
+             if (!container) return;
+             container.innerHTML = ''; // Clear existing
+            const numConnections = 20; // Increased count
+
+            for (let i = 0; i < numConnections; i++) {
+                const connection = document.createElement('div');
+                connection.className = 'connection';
+
+                const startX = Math.random() * window.innerWidth;
+                const startY = Math.random() * window.innerHeight;
+                const length = 80 + Math.random() * 250; // Wider length range
+                const angle = Math.random() * 360;
+
+                connection.style.width = `0px`; // Start at 0 width for animation
+                connection.style.left = `${startX}px`;
+                connection.style.top = `${startY}px`;
+                connection.style.transform = `rotate(${angle}deg)`;
+
+                 // Stagger animation starts
+                const delay = Math.random() * 6;
+                connection.style.animationDelay = `${delay}s`;
+
+                // Apply delay to the ::after pseudo-element as well
+                 // We need to inject a style rule or use CSS variables if we need dynamic delay on pseudo-elements easily
+                 // Simpler approach: delay the main animation, the pseudo-element animation starts relative to it
+                connection.style.setProperty('--node-delay', `${delay + 0.5}s`); // CSS variable for potential use
+
+                container.appendChild(connection);
+            }
+        }
+
+        // --- Interactive Elements ---
+        function createPhysicsObjects() {
+            const physicsContainer = document.getElementById('physics-container');
+            if (!physicsContainer) return;
+            physicsContainer.innerHTML = ''; // Clear existing
+
+            const standards = [
+                { id: 'clarity', name: 'Clarity', color: '#6366F1', description: 'Ideas easy to understand, free from confusion.' },
+                { id: 'accuracy', name: 'Accuracy', color: '#3B82F6', description: 'Information correct and error-free.' },
+                { id: 'precision', name: 'Precision', color: '#8B5CF6', description: 'Being specific and exact with details.' },
+                { id: 'relevance', name: 'Relevance', color: '#EC4899', description: 'Focusing on what truly matters.' },
+                { id: 'depth', name: 'Depth', color: '#10B981', description: 'Looking beyond the surface complexity.' },
+                { id: 'logic', name: 'Logic', color: '#F59E0B', description: 'Reasoning that follows sense and rules.' }
+            ];
+
+             const numObjects = standards.length;
+             const radius = Math.min(window.innerWidth, window.innerHeight) * 0.3; // Dynamic radius
+             const centerX = window.innerWidth / 2;
+             const centerY = window.innerHeight / 2.2; // Slightly higher center
+
+            standards.forEach((standard, index) => {
+                const object = document.createElement('div');
+                object.className = 'physics-object';
+                object.id = `object-${standard.id}`;
+                object.dataset.standard = standard.id;
+
+                const size = 65 + Math.random() * 15; // Slightly larger base size
+                object.style.width = `${size}px`;
+                object.style.height = `${size}px`;
+                object.style.backgroundColor = standard.color;
+                object.style.boxShadow = `0 6px 18px ${standard.color}60`; // Adjusted shadow
+                object.textContent = standard.name.charAt(0); // Keep initial
+
+                const angle = (index / numObjects) * Math.PI * 2 + Math.PI / 6; // Offset start angle
+                const x = centerX + Math.cos(angle) * radius - size / 2;
+                const y = centerY + Math.sin(angle) * radius - size / 2;
+
+                object.style.left = `${x}px`;
+                object.style.top = `${y}px`;
+
+                // Randomize float animation slightly
+                 object.style.animationDuration = `${5 + Math.random() * 4}s`;
+                 object.style.animationDelay = `${index * 0.3}s`;
+
+                // Add info tooltip
+                const info = document.createElement('div');
+                info.className = 'object-info';
+                info.innerHTML = `
+                    <h3>${standard.name}</h3>
+                    <p>${standard.description}</p>
+                `;
+                object.appendChild(info);
+
+                // Add click effect
+                object.addEventListener('click', () => {
+                     // Simple scale pulse animation on click
+                    object.style.transform = 'scale(1.2) translateZ(30px)';
+                    playSound(standard.id); // Play sound associated with the object
+                    setTimeout(() => {
+                        object.style.transform = ''; // Return to default (hover or base) state
+                    }, 150); // Short pulse duration
+                });
+
+                physicsContainer.appendChild(object);
+            });
+        }
+
+        function setupMouseMoveEffect() {
+            const content = document.getElementById('main-content');
+            const container = document.getElementById('splash-container');
+            const physicsObjs = document.querySelectorAll('.physics-object');
+             const stars = document.querySelectorAll('.star'); // Select stars too
+
+            if (!content || !container) return;
+
+            const handleMouseMove = (e) => {
+                const xPos = (e.clientX / window.innerWidth - 0.5) * 30; // Increased effect range
+                const yPos = (e.clientY / window.innerHeight - 0.5) * 30;
+
+                // Apply 3D transform to main content (logo, text, buttons)
+                content.style.transform = `translateZ(50px) rotateX(${-yPos * 0.5}deg) rotateY(${xPos * 0.5}deg)`;
+
+                // Move physics objects with parallax
+                physicsObjs.forEach((obj, index) => {
+                     const factor = 0.08 + (index % 3) * 0.02; // Vary factor slightly
+                     const xMove = xPos * factor;
+                     const yMove = yPos * factor;
+                     // Combine with existing float animation if needed, but direct transform is simpler here
+                     // Note: This overrides the float animation's transform. Consider adding transforms together if needed.
+                     obj.style.transform = `translateX(${xMove}px) translateY(${yMove}px) translateZ(${factor * 50}px)`;
+                 });
+
+                 // Move stars with parallax (more subtle)
+                 stars.forEach(star => {
+                     const depth = parseFloat(star.style.transform.replace(/[^-\d.]/g, '')) || 0;
+                     const factor = 0.01 + Math.abs(depth) / 5000; // Depth influences parallax
+                     const xMove = xPos * factor;
+                     const yMove = yPos * factor;
+                     // Important: Keep the original Z transform
+                     star.style.transform = `translateX(${xMove}px) translateY(${yMove}px) translateZ(${depth}px)`;
+                 });
+            };
+
+            const resetMouseMove = () => {
+                 content.style.transform = 'translateZ(50px)'; // Reset content tilt
+                 physicsObjs.forEach(obj => {
+                     obj.style.transform = ''; // Reset object position (rely on CSS animation now)
+                 });
+                 stars.forEach(star => {
+                     // Extract original Z, reset X/Y
+                     const depth = parseFloat(star.style.transform.replace(/[^-\d.]/g, '')) || 0;
+                      star.style.transform = `translateZ(${depth}px)`;
+                 });
+            };
+
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseleave', resetMouseMove);
+        }
+
+        // --- Game Actions & Modal ---
+        function startGame() {
+             playSound('start-game');
+             // Show loading overlay again for transition
+             loadingTextElement.textContent = "Launching Bubbles..."; // Update text
+             progressFill.style.width = '0%'; // Reset progress bar
+             progressFill.style.transition = 'width 1.5s ease-in-out'; // Slower transition for effect
+             loadingOverlay.style.display = 'flex';
+
+             // Force reflow to apply display change before opacity transition
+             void loadingOverlay.offsetWidth;
+
+             loadingOverlay.style.opacity = '1';
+
+              // Simulate loading the game (e.g., 1.5 seconds)
+             setTimeout(() => {
+                 progressFill.style.width = '100%';
+             }, 100); // Start progress bar fill quickly
+
+             // After loading simulation, navigate
+             setTimeout(() => {
+                 window.location.href = 'index.html'; // Navigate to the game page (reloads current page)
+             }, 1800); // Wait for progress bar + a little extra
+        }
+
+        function showAboutModal() {
+             playSound('modal-open');
+             modalOverlay.classList.add('visible');
+             // Focus the close button for accessibility
+             setTimeout(() => closeModalBtn.focus(), 50);
+         }
+
+         function hideAboutModal() {
+             playSound('modal-close');
+             modalOverlay.classList.remove('visible');
+         }
+
+        // --- Sound Control ---
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+             soundToggle.classList.toggle('active', soundEnabled);
+            updateSoundIcon();
+            // Add actual sound mute/unmute logic here using Web Audio API or <audio> elements
+             playSound(soundEnabled ? 'sound-on' : 'sound-off');
+             console.log(`Sound ${soundEnabled ? 'Enabled' : 'Disabled'}`);
+         }
+
+        function updateSoundIcon() {
+            if (soundEnabled) {
+                 soundIconOn.style.display = 'block';
+                 soundIconOff.style.display = 'none';
+            } else {
+                 soundIconOn.style.display = 'none';
+                 soundIconOff.style.display = 'block';
+            }
+        }
+
+        function playSound(id) {
+            if (!soundEnabled) return; // Don't play if muted
+
+            // Placeholder for actual sound playback logic
+            // In a real app, you'd use Web Audio API or manage <audio> elements
+            // Example:
+            // const audio = document.getElementById(`audio-${id}`);
+            // if (audio) {
+            //     audio.currentTime = 0;
+            //     audio.play();
+            // }
+             console.log(`Playing sound for: ${id}`);
+        }
+
+    </script>
+</body>
+</html>

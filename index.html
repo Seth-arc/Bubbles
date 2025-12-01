@@ -1,0 +1,3147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubbles - Critical Thinking Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #6366F1; /* Indigo */
+            --primary-dark: #4338CA;  /* Darker Indigo */
+            --primary-light: #A5B4FC; /* Lighter Indigo */
+            --secondary-color: #10B981; /* Emerald */
+            --secondary-dark: #047857;  /* Darker Emerald */
+            --tertiary-color: #EF4444; /* Red */
+            --tertiary-dark: #B91C1C;  /* Darker Red */
+            --accent-color: #F59E0B;  /* Amber */
+            --background-color: #F8FAFC; /* Very Light Gray */
+            --card-color: #FFFFFF;
+            --text-color: #1F2937;   /* Dark Gray */
+            --text-light: #6B7280;  /* Medium Gray */
+            --container-shadow: 0 12px 28px rgba(99, 102, 241, 0.1), 0 6px 12px rgba(0,0,0,0.06);
+            --ball-shadow: 0 6px 12px rgba(99, 102, 241, 0.3);
+            --button-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+            overflow-x: hidden;
+             /* Subtle background gradient */
+            background: linear-gradient(170deg, #F8FAFC 60%, #EEF2FF 100%);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px; /* Adjusted margin */
+            color: var(--primary-dark);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800; /* Bolder */
+            letter-spacing: -1.5px; /* Tighter spacing */
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Gradient underline for title */
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px; /* Adjusted position */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px; /* Increased width */
+            height: 5px; /* Increased height */
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px; /* Slightly wider */
+            background: var(--card-color);
+            border-radius: 28px; /* Smoother radius */
+            padding: 30px; /* Increased padding */
+            box-shadow: var(--container-shadow);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #E5E7EB; /* Subtle border */
+        }
+
+        .game-area {
+            position: relative;
+            height: 480px; /* Default height for desktop */
+            border: none;
+            border-radius: 20px; /* Smoother radius */
+            overflow: hidden;
+            margin-bottom: 25px;
+             /* More vibrant game area background */
+            background: linear-gradient(135deg, #F0F9FF 0%, #ECFEFF 100%);
+            box-shadow: inset 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        /* Game environment effects */
+        .game-area::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(circle at 5% 5%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 95% 15%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 15% 90%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.04) 0%, transparent 40%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .ball {
+            position: absolute;
+            width: 60px; /* Slightly smaller */
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); /* Softer gradient */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700; /* Bolder */
+            font-size: 1.3rem; /* Larger initial */
+            cursor: grab;
+            user-select: none;
+            box-shadow: var(--ball-shadow), inset 0 -3px 5px rgba(0,0,0,0.15); /* Added inner shadow */
+            transition: transform 0.15s cubic-bezier(0.215, 0.61, 0.355, 1), box-shadow 0.2s ease;
+            z-index: 10;
+            border: 2px solid rgba(255, 255, 255, 0.8); /* Thinner border */
+            font-family: 'Montserrat', sans-serif;
+            /* Removed ball-glow animation for performance, rely on hover/active */
+        }
+
+        .ball:hover {
+            transform: scale(1.1); /* More pronounced hover */
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.35), inset 0 -3px 5px rgba(0,0,0,0.15);
+        }
+
+        .ball:active {
+            transform: scale(0.95); /* Less shrink */
+            cursor: grabbing;
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25), inset 0 -3px 5px rgba(0,0,0,0.15);
+        }
+
+        .target {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px dashed var(--secondary-color); /* Thicker dash */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--secondary-dark);
+            background-color: rgba(16, 185, 129, 0.06); /* Lighter background */
+            z-index: 5;
+            backdrop-filter: blur(1px); /* Very subtle blur */
+            transition: transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+            animation: target-pulse 2.5s infinite ease-in-out;
+            font-size: 0.9rem; /* Adjusted text size */
+            text-align: center;
+            padding: 5px;
+        }
+        /* Target pulse effect */
+        @keyframes target-pulse {
+            0% { border-color: var(--secondary-color); transform: scale(1); }
+            50% { border-color: rgba(16, 185, 129, 0.5); transform: scale(1.03); }
+            100% { border-color: var(--secondary-color); transform: scale(1); }
+        }
+
+        .target.inactive {
+             opacity: 0.4;
+             border-style: solid;
+             border-color: #D1D5DB; /* Gray border when inactive */
+             background-color: rgba(209, 213, 219, 0.1);
+             color: var(--text-light);
+             animation: none;
+             pointer-events: none;
+        }
+
+        .obstacle {
+            position: absolute;
+            background: linear-gradient(145deg, #A78BFA, #7C3AED); /* Purple gradient */
+            opacity: 0.9; /* Slightly more opaque */
+            border-radius: 10px; /* Slightly less rounded */
+            z-index: 5;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.1); /* Added inner highlight */
+        }
+
+        .info-panel {
+            background-color: var(--card-color);
+            border-radius: 24px; /* Consistent radius */
+            padding: 30px;
+            box-shadow: var(--container-shadow);
+            margin-top: 30px; /* Added margin top */
+            width: 100%;
+            max-width: 900px;
+            border: 1px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Gradient top border for info panel */
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .standard-info {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .standard-info h3 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.5rem; /* Larger heading */
+            font-weight: 700; /* Bolder */
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .standard-info p {
+            line-height: 1.8; /* Increased line height */
+            color: var(--text-color); /* Darker text for readability */
+            font-size: 1.05rem;
+        }
+
+        .level-info {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 12px 20px; /* Adjusted padding */
+            border-radius: 16px; /* Smoother radius */
+            margin-bottom: 15px; /* Reduced margin */
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem; /* Adjusted size */
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+         /* Glow effect removed for simplicity, handled by overall design */
+
+        .level-instructions {
+            margin-bottom: 20px;
+            line-height: 1.7;
+            font-size: 1.05rem; /* Adjusted size */
+            color: var(--text-light);
+            padding: 0 10px; /* Added padding */
+            text-align: center;
+        }
+
+        .game-buttons {
+            display: flex;
+            gap: 18px; /* Increased gap */
+            margin-bottom: 25px; /* Increased margin */
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 14px 28px; /* Larger buttons */
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 14px; /* Consistent radius */
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.25s ease;
+            box-shadow: var(--button-shadow);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase; /* Uppercase text */
+            letter-spacing: 0.5px; /* Slight letter spacing */
+        }
+         /* Shimmer effect */
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%; /* Start further left */
+            width: 50%; /* Narrower shimmer */
+            height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+            transform: skewX(-25deg); /* Skewed shimmer */
+            transition: left 0.6s cubic-bezier(0.23, 1, 0.32, 1); /* Smoother transition */
+        }
+
+        button:hover {
+            transform: translateY(-4px) scale(1.02); /* Enhanced hover */
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        button:hover::before {
+            left: 150%; /* Move further right */
+        }
+
+        button:active {
+            transform: translateY(0px) scale(0.98); /* Adjusted active state */
+            box-shadow: 0 3px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        button.hidden {
+            display: none;
+        }
+
+        #next-level {
+            background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25);
+        }
+        #next-level:hover {
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px; /* Increased margin */
+            padding: 10px 15px; /* Added padding */
+            background-color: #F3F4F6; /* Light gray background */
+            border-radius: 16px;
+        }
+
+        .score {
+            font-size: 1.2rem; /* Adjusted size */
+            font-weight: 700; /* Bolder */
+            color: var(--primary-dark);
+            padding: 8px 18px; /* Adjusted padding */
+            border-radius: 12px;
+            background-color: rgba(99, 102, 241, 0.1);
+            transition: transform 0.3s ease;
+        }
+        /* Score bump animation */
+        @keyframes score-bump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .score-bump {
+            animation: score-bump 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        
+        .level-progress {
+            display: flex;
+            align-items: center; /* Align items vertically */
+            gap: 10px; /* Gap between text and bar */
+            width: 60%; /* Increased width */
+        }
+        
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 500; /* Medium weight */
+            white-space: nowrap; /* Prevent wrapping */
+        }
+        
+        .progress-bar {
+            flex-grow: 1; /* Allow bar to take remaining space */
+            height: 10px; /* Thicker bar */
+            background-color: #E5E7EB; /* Lighter background */
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Inner shadow */
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary-color)); /* Adjusted gradient */
+            border-radius: 5px;
+            width: 0%; /* Start at 0 */
+            transition: width 0.6s cubic-bezier(0.215, 0.61, 0.355, 1); /* Smoother transition */
+        }
+
+        .feedback {
+            padding: 20px 25px; /* Increased padding */
+            border-radius: 16px;
+            margin-top: 20px;
+            background-color: rgba(16, 185, 129, 0.05); /* Lighter green */
+            border-left: 6px solid var(--secondary-color); /* Thicker border */
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.1); /* Softer shadow */
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .feedback.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            height: 0;
+            padding: 0 25px;
+            margin-top: 0;
+            overflow: hidden;
+            border: none;
+        }
+
+        .message {
+            font-weight: 700; /* Bolder */
+            margin-bottom: 10px;
+            color: var(--secondary-dark);
+            font-size: 1.2rem; /* Larger message */
+        }
+
+        .detail {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #374151; /* Slightly darker detail text */
+        }
+        
+        .button-icon {
+            display: inline-block;
+            margin-right: 8px; /* Increased spacing */
+            font-weight: bold;
+            vertical-align: middle; /* Align icon better */
+        }
+        
+        .game-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+             /* Softer overlay background */
+            background: rgba(248, 250, 252, 0.9);
+            backdrop-filter: blur(5px); /* Subtle blur */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden; /* Use visibility */
+            transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+        }
+        
+        .game-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0s linear 0s;
+        }
+        
+        .overlay-content {
+            text-align: center;
+            padding: 35px 45px; /* Increased padding */
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12); /* Softer shadow */
+            max-width: 550px; /* Limit width */
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+        .game-overlay.active .overlay-content {
+             transform: scale(1);
+        }
+
+        
+        .overlay-title {
+            font-size: 2.2rem; /* Larger title */
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+        }
+        
+        .overlay-message {
+            font-size: 1.15rem; /* Adjusted size */
+            margin-bottom: 25px;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+
+        .overlay-content button { /* Style button inside overlay */
+             margin-top: 10px;
+        }
+        
+        .how-to-play {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #E5E7EB; /* Lighter separator */
+            text-align: left; /* Left align text */
+        }
+        
+        .how-to-play h3 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            align-items: center;
+        }
+         /* Question mark icon */
+        .how-to-play h3::before {
+            content: '?';
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 28px; /* Larger icon */
+            height: 28px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-radius: 50%;
+            margin-right: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        
+        .how-to-play p {
+            line-height: 1.8;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        
+        /* Level badge */
+        .level-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--primary-dark);
+            border-radius: 50%;
+            width: 44px; /* Larger badge */
+            height: 44px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            z-index: 20;
+            border: 3px solid var(--primary-light); /* Thicker border */
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* Ball trail */
+        .ball-trail {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9; /* Below ball */
+             /* Gradient trail */
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.5) 0%, transparent 70%);
+        }
+
+        /* Drag line */
+        #drag-line {
+            position: absolute;
+            z-index: 9;
+            pointer-events: none;
+            height: 4px; /* Thicker line */
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.7), rgba(99, 102, 241, 0.1));
+            border-radius: 2px;
+            transform-origin: left center;
+        }
+        /* Drag power indicator dots */
+        .drag-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(99, 102, 241, 0.6);
+            border-radius: 50%;
+            z-index: 9;
+            pointer-events: none;
+        }
+
+
+        /* Bounce effect */
+        .bounce-effect {
+            position: absolute;
+            width: 30px; /* Larger effect */
+            height: 30px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* Level completion confetti effect */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(720deg); opacity: 0; } /* Increased rotation */
+        }
+        .confetti {
+            position: absolute;
+            width: 8px; /* Base size - will be overridden */
+            height: 12px; /* Base size - will be overridden */
+            opacity: 0;
+            z-index: 100; /* Higher z-index to ensure visibility */
+            border-radius: 2px; /* Default border radius */
+            animation: confetti-fall 3s ease-out forwards;
+            will-change: transform, opacity; /* Performance optimization */
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1)); /* Subtle shadow for depth */
+            pointer-events: none; /* Ensure confetti doesn't interfere with interactions */
+        }
+
+        /* Animations for success and transitions */
+        @keyframes success-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            50% { transform: scale(1.15); box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .success-animation {
+            animation: success-pulse 0.7s cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+
+        /* Level title transition */
+        .level-title-transition {
+            animation: level-title-fade 0.8s ease-in-out;
+        }
+        @keyframes level-title-fade {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Level transition overlay */
+        .level-transition-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+
+        @media (max-width: 768px) {
+             body { 
+                 padding: 10px; 
+                 min-height: auto;
+             }
+            h1 { font-size: 2.3rem; }
+            h1::after { width: 70px; height: 4px; bottom: -8px; }
+            .game-container, .info-panel { 
+                padding: 15px; 
+                max-width: 100%; 
+                margin-bottom: 20px;
+            }
+            .game-area { 
+                height: 60vh; /* Use viewport height for responsive sizing */
+                min-height: 300px; /* Minimum height */
+                max-height: 400px; /* Maximum height */
+                max-width: 100%;
+                margin: 0 auto;
+            }
+            /* Scale game elements for the smaller game area */
+            .ball { width: 50px; height: 50px; font-size: 1.1rem; }
+            .target { width: 70px; height: 70px; font-size: 0.8rem; }
+            .standard-info h3 { font-size: 1.3rem; }
+            .standard-info p { font-size: 1rem; }
+            .level-info { font-size: 1rem; padding: 10px 15px; }
+            .level-instructions { font-size: 1rem; }
+            button { padding: 12px 20px; font-size: 0.9rem; }
+            .score-container { flex-direction: column; gap: 15px; align-items: stretch; }
+            .level-progress { width: 100%; }
+            .score { text-align: center; }
+            .overlay-title { font-size: 1.8rem; }
+            .overlay-message { font-size: 1rem; }
+            .how-to-play h3 { font-size: 1.2rem; }
+            .how-to-play p { font-size: 0.95rem; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            h1 { font-size: 1.8rem; margin-bottom: 10px; }
+            .header { margin-bottom: 10px; }
+            .game-container, .info-panel { 
+                padding: 12px; 
+                border-radius: 20px;
+            }
+            .game-area { 
+                height: 55vh; /* Slightly smaller height for very small screens */
+                min-height: 250px;
+                max-height: 350px;
+                width: 100%; 
+                max-width: 100%;
+                border-radius: 15px;
+                margin-bottom: 15px;
+            }
+            .ball { width: 45px; height: 45px; font-size: 1rem; }
+            .target { width: 60px; height: 60px; border-width: 3px; }
+            .game-buttons { gap: 10px; }
+            button { padding: 10px 16px; font-size: 0.85rem; }
+            .score { font-size: 1rem; padding: 6px 12px; }
+            .level-badge { width: 36px; height: 36px; font-size: 1rem; top: 10px; right: 10px; }
+            /* Adjust obstacles for better mobile gameplay */
+            .obstacle { border-radius: 8px; }
+        }
+
+        /* Add a new media query for very small devices */
+        @media (max-width: 360px) {
+            body { padding: 5px; }
+            h1 { font-size: 1.6rem; }
+            .game-container { padding: 10px; }
+            .game-area { 
+                height: 50vh;
+                min-height: 200px;
+                max-height: 300px;
+                border-radius: 12px;
+            }
+            .ball { width: 40px; height: 40px; font-size: 0.9rem; }
+            .target { width: 55px; height: 55px; }
+            .level-instructions { font-size: 0.85rem; }
+            .level-info { font-size: 0.9rem; padding: 8px 12px; }
+            /* Ensure content fits */
+            .overlay-content { padding: 20px 15px; }
+            .overlay-title { font-size: 1.5rem; }
+            .overlay-message { font-size: 0.9rem; }
+        }
+
+        /* Ensure the game adapts to device orientation */
+        @media (orientation: landscape) and (max-height: 500px) {
+            body { 
+                padding: 5px; 
+                min-height: auto;
+            }
+            h1 { 
+                font-size: 1.5rem; 
+                margin-bottom: 5px; 
+            }
+            h1::after {
+                bottom: -5px;
+                height: 3px;
+                width: 60px;
+            }
+            .header { margin-bottom: 5px; }
+            .game-container { 
+                padding: 10px; 
+                margin-bottom: 10px;
+            }
+            .game-area { 
+                height: 75vh; /* Use more of the viewport height in landscape */
+                min-height: 180px;
+                max-height: 250px;
+                max-width: 95%;
+                margin: 0 auto 10px auto;
+            }
+            .score-container {
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 10px;
+                padding: 5px 10px;
+            }
+            /* Make elements more compact in landscape */
+            .level-info { 
+                margin-bottom: 5px; 
+                padding: 5px 10px;
+                font-size: 0.9rem;
+            }
+            .level-instructions { 
+                margin-bottom: 5px;
+                font-size: 0.85rem;
+            }
+            .game-buttons {
+                margin-bottom: 10px;
+            }
+            button {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 15px;
+            right: 70px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            z-index: 20;
+            border: 3px solid var(--primary-light);
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .sound-toggle:hover {
+            transform: scale(1.05);
+        }
+        
+        .sound-toggle.muted {
+            background-color: #f1f1f1;
+            border-color: #d1d5db;
+            color: #9ca3af;
+        }
+        
+        @media (max-width: 480px) {
+            .sound-toggle {
+                top: 10px;
+                right: 60px;
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Bubbles</h1>
+    </div>
+
+    <div class="game-container">
+        <div class="level-info" id="level-title"></div>
+        <div class="level-instructions" id="level-instructions">
+        </div>
+        
+        <div class="game-area" id="game-area">
+            <!-- Sound toggle button -->
+            <div class="sound-toggle" id="sound-toggle">🔊</div>
+            
+            <!-- Game elements will be created by JavaScript -->
+            <!-- Overlay for welcome/completion messages -->
+            <div class="game-overlay" id="game-overlay"></div>
+            <!-- Container for drag line elements -->
+            <div id="drag-indicator-container"></div>
+        </div>
+
+        <div class="score-container">
+            <div class="score" id="score-display">Score: <span id="score">0</span></div>
+            <div class="level-progress">
+                <div class="progress-text" id="progress-text">Progress: 0 / 8</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-buttons">
+            <button id="restart-button"><span class="button-icon">↺</span> Restart</button>
+            <button id="next-level" class="hidden"><span class="button-icon">→</span> Next Level</button>
+        </div>
+        
+        <div class="feedback hidden" id="feedback">
+            <div class="message" id="feedback-message"></div>
+            <div class="detail" id="feedback-detail"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Manager ---
+        class SoundManager {
+          constructor() {
+            // Initialize Web Audio API
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.masterGainNode = this.audioContext.createGain();
+            this.masterGainNode.gain.value = 0.5; // Default volume at 50%
+            this.masterGainNode.connect(this.audioContext.destination);
+            
+            // Sound cache to prevent creating duplicate sounds
+            this.soundCache = {};
+            
+            // Define sound categories
+            this.categories = {
+              physics: { gain: 0.4 },
+              feedback: { gain: 0.6 },
+              ui: { gain: 0.3 },
+              ambient: { gain: 0.2 }
+            };
+            
+            // Create category gain nodes
+            this.categoryGains = {};
+            for (const category in this.categories) {
+              const gainNode = this.audioContext.createGain();
+              gainNode.gain.value = this.categories[category].gain;
+              gainNode.connect(this.masterGainNode);
+              this.categoryGains[category] = gainNode;
+            }
+            
+            // Initialize sound effects
+            this.initSoundEffects();
+          }
+          
+          // Set master volume
+          setVolume(value) {
+            this.masterGainNode.gain.value = Math.max(0, Math.min(1, value));
+          }
+          
+          // Toggle sounds on/off
+          toggleMute() {
+            if (this.masterGainNode.gain.value > 0) {
+              this._savedVolume = this.masterGainNode.gain.value;
+              this.masterGainNode.gain.value = 0;
+              return false; // Muted
+            } else {
+              this.masterGainNode.gain.value = this._savedVolume || 0.5;
+              return true; // Unmuted
+            }
+          }
+          
+          // Initialize all sound effects
+          initSoundEffects() {
+            // Create physics interaction sounds
+            this.createBounceSound();
+            this.createLaunchSound();
+            this.createCollisionSound();
+            this.createTargetHitSound();
+            
+            // Create UI sounds
+            this.createButtonSound();
+            this.createSuccessSound();
+            this.createErrorSound();
+            
+            // Create feedback sounds
+            this.createLevelCompleteSound();
+            this.createGameOverSound();
+            
+            // Create standard-specific sounds
+            this.createClaritySound();
+            this.createAccuracySound();
+            this.createPrecisionSound();
+            this.createRelevanceSound();
+            this.createDepthSound();
+            this.createBreadthSound();
+            this.createLogicSound();
+            this.createFairnessSound();
+          }
+          
+          // Play a sound from the system
+          play(soundName, options = {}) {
+            // Resume audio context if suspended (needed for browsers that require user interaction)
+            if (this.audioContext.state === 'suspended') {
+              this.audioContext.resume();
+            }
+            
+            if (this.soundCache[soundName]) {
+              const sound = this.soundCache[soundName];
+              
+              // Clone the source if it's already playing
+              const source = this.audioContext.createBufferSource();
+              source.buffer = sound.buffer;
+              
+              // Connect through effect chain if one exists
+              if (sound.effectChain) {
+                source.connect(sound.effectChain.input);
+                // The last node in the chain should already be connected to the category gain
+              } else {
+                // Connect directly to category gain
+                source.connect(this.categoryGains[sound.category]);
+              }
+              
+              // Set playback rate if specified
+              if (options.playbackRate) {
+                source.playbackRate.value = options.playbackRate;
+              }
+              
+              // Start playback
+              const startTime = options.delay ? this.audioContext.currentTime + options.delay : this.audioContext.currentTime;
+              source.start(startTime);
+              
+              // Stop if duration provided
+              if (options.duration) {
+                source.stop(startTime + options.duration);
+              }
+              
+              return source;
+            } else {
+              console.warn(`Sound '${soundName}' not found`);
+              return null;
+            }
+          }
+          
+          // Register a sound in the cache
+          registerSound(name, buffer, category, effectChain = null) {
+            this.soundCache[name] = {
+              buffer: buffer,
+              category: category,
+              effectChain: effectChain
+            };
+          }
+          
+          // Create an oscillator-based sound
+          createOscillatorSound(name, category, settings, effectChain = null) {
+            const duration = settings.duration || 0.5;
+            const sampleRate = this.audioContext.sampleRate;
+            const buffer = this.audioContext.createBuffer(2, sampleRate * duration, sampleRate);
+            
+            // Get left and right channel data
+            const leftChannel = buffer.getChannelData(0);
+            const rightChannel = buffer.getChannelData(1);
+            
+            // Generate sound data
+            for (let i = 0; i < buffer.length; i++) {
+              // Time in seconds
+              const time = i / sampleRate;
+              
+              // Basic oscillator type calculation
+              let sample = 0;
+              
+              // Oscillator type
+              if (settings.type === 'sine') {
+                sample = Math.sin(2 * Math.PI * settings.frequency * time);
+              } else if (settings.type === 'square') {
+                sample = Math.sin(2 * Math.PI * settings.frequency * time) > 0 ? 0.7 : -0.7;
+              } else if (settings.type === 'sawtooth') {
+                sample = 2 * (time * settings.frequency - Math.floor(0.5 + time * settings.frequency));
+              } else if (settings.type === 'noise') {
+                sample = Math.random() * 2 - 1;
+              }
+              
+              // Apply envelope
+              let envelope = 1;
+              const attackTime = settings.attack || 0.01;
+              const releaseTime = settings.release || 0.05;
+              
+              if (time < attackTime) {
+                // Attack phase
+                envelope = time / attackTime;
+              } else if (time > duration - releaseTime) {
+                // Release phase
+                envelope = (duration - time) / releaseTime;
+              }
+              
+              // Apply frequency modulation if specified
+              if (settings.frequencyModulation) {
+                const modFreq = settings.frequencyModulation.frequency;
+                const modDepth = settings.frequencyModulation.depth;
+                sample *= Math.sin(2 * Math.PI * modFreq * time) * modDepth + (1 - modDepth);
+              }
+              
+              // Apply final sample
+              const finalSample = sample * envelope * (settings.volume || 1);
+              
+              // Apply to both channels (could pan here if needed)
+              leftChannel[i] = finalSample;
+              rightChannel[i] = finalSample;
+            }
+            
+            // Register the sound
+            this.registerSound(name, buffer, category, effectChain);
+          }
+          
+          // Create effect chain for a sound
+          createEffectChain(effects) {
+            const chain = {
+              input: null,
+              output: null
+            };
+            
+            let previousNode = null;
+            let firstNode = null;
+            
+            // Create and connect all effects in the chain
+            effects.forEach((effect, index) => {
+              let node;
+              
+              switch (effect.type) {
+                case 'lowpass':
+                  node = this.audioContext.createBiquadFilter();
+                  node.type = 'lowpass';
+                  node.frequency.value = effect.frequency || 1000;
+                  node.Q.value = effect.Q || 1;
+                  break;
+                  
+                case 'highpass':
+                  node = this.audioContext.createBiquadFilter();
+                  node.type = 'highpass';
+                  node.frequency.value = effect.frequency || 500;
+                  node.Q.value = effect.Q || 1;
+                  break;
+                  
+                case 'reverb':
+                  node = this.createReverbNode(effect.duration || 2, effect.decay || 0.5);
+                  break;
+                  
+                case 'delay':
+                  node = this.audioContext.createDelay();
+                  node.delayTime.value = effect.time || 0.3;
+                  
+                  // Create feedback loop for delay
+                  if (effect.feedback) {
+                    const feedback = this.audioContext.createGain();
+                    feedback.gain.value = effect.feedback;
+                    node.connect(feedback);
+                    feedback.connect(node);
+                  }
+                  break;
+                  
+                default:
+                  node = this.audioContext.createGain(); // Passthrough
+              }
+              
+              if (index === 0) {
+                firstNode = node;
+              }
+              
+              if (previousNode) {
+                previousNode.connect(node);
+              }
+              
+              previousNode = node;
+            });
+            
+            // Set input and output nodes of the chain
+            chain.input = firstNode;
+            chain.output = previousNode;
+            
+            return chain;
+          }
+          
+          // Create a reverb node (convolution)
+          createReverbNode(duration, decay) {
+            const sampleRate = this.audioContext.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = this.audioContext.createBuffer(2, length, sampleRate);
+            const leftChannel = impulse.getChannelData(0);
+            const rightChannel = impulse.getChannelData(1);
+            
+            // Generate impulse response
+            for (let i = 0; i < length; i++) {
+              const n = i / length;
+              // Decay curve
+              const value = (Math.random() * 2 - 1) * Math.pow(1 - n, decay);
+              leftChannel[i] = value;
+              rightChannel[i] = value;
+            }
+            
+            const convolver = this.audioContext.createConvolver();
+            convolver.buffer = impulse;
+            return convolver;
+          }
+          
+          // Create the sound when a ball bounces off a surface
+          createBounceSound() {
+            // Create effect chain for bounce sound
+            const bounceEffects = [
+              { type: 'lowpass', frequency: 800 }
+            ];
+            const bounceChain = this.createEffectChain(bounceEffects);
+            bounceChain.output.connect(this.categoryGains['physics']);
+            
+            // Create the bounce sound
+            this.createOscillatorSound('bounce', 'physics', {
+              type: 'sine',
+              frequency: 150,
+              duration: 0.15,
+              attack: 0.001,
+              release: 0.1,
+              volume: 0.8
+            }, bounceChain);
+            
+            // Create a variant for different surfaces
+            this.createOscillatorSound('bounce_hard', 'physics', {
+              type: 'sine',
+              frequency: 200,
+              duration: 0.1,
+              attack: 0.001,
+              release: 0.05,
+              volume: 0.9
+            }, bounceChain);
+          }
+          
+          // Create the sound when a ball is launched
+          createLaunchSound() {
+            const launchEffects = [
+              { type: 'highpass', frequency: 300 }
+            ];
+            const launchChain = this.createEffectChain(launchEffects);
+            launchChain.output.connect(this.categoryGains['physics']);
+            
+            this.createOscillatorSound('launch', 'physics', {
+              type: 'square',
+              frequency: 220,
+              duration: 0.3,
+              attack: 0.01,
+              release: 0.2,
+              frequencyModulation: {
+                frequency: 10,
+                depth: 0.3
+              },
+              volume: 0.7
+            }, launchChain);
+          }
+          
+          // Create the sound when a ball collides with an obstacle
+          createCollisionSound() {
+            const collisionEffects = [
+              { type: 'lowpass', frequency: 1000 },
+              { type: 'reverb', duration: 0.3, decay: 0.8 }
+            ];
+            const collisionChain = this.createEffectChain(collisionEffects);
+            collisionChain.output.connect(this.categoryGains['physics']);
+            
+            this.createOscillatorSound('collision', 'physics', {
+              type: 'noise',
+              duration: 0.2,
+              attack: 0.001,
+              release: 0.15,
+              volume: 0.6
+            }, collisionChain);
+          }
+          
+          // Create the sound when a ball hits a target
+          createTargetHitSound() {
+            const targetEffects = [
+              { type: 'reverb', duration: 1, decay: 0.6 }
+            ];
+            const targetChain = this.createEffectChain(targetEffects);
+            targetChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('target_hit', 'feedback', {
+              type: 'sine',
+              frequency: 440, // A4 note
+              duration: 0.6,
+              attack: 0.01,
+              release: 0.4,
+              volume: 0.8
+            }, targetChain);
+          }
+          
+          // Create UI button click sound
+          createButtonSound() {
+            this.createOscillatorSound('button', 'ui', {
+              type: 'sine',
+              frequency: 330,
+              duration: 0.1,
+              attack: 0.001,
+              release: 0.05,
+              volume: 0.5
+            });
+          }
+          
+          // Success sound effect
+          createSuccessSound() {
+            const successChain = this.createEffectChain([
+              { type: 'reverb', duration: 1.5, decay: 0.5 }
+            ]);
+            successChain.output.connect(this.categoryGains['feedback']);
+            
+            // First note
+            this.createOscillatorSound('success_1', 'feedback', {
+              type: 'sine',
+              frequency: 523.25, // C5
+              duration: 0.15,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.7
+            }, successChain);
+            
+            // Second note
+            this.createOscillatorSound('success_2', 'feedback', {
+              type: 'sine',
+              frequency: 659.25, // E5
+              duration: 0.15,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.7
+            }, successChain);
+            
+            // Third note
+            this.createOscillatorSound('success_3', 'feedback', {
+              type: 'sine',
+              frequency: 783.99, // G5
+              duration: 0.3,
+              attack: 0.01,
+              release: 0.2,
+              volume: 0.7
+            }, successChain);
+          }
+          
+          // Error sound effect
+          createErrorSound() {
+            this.createOscillatorSound('error', 'feedback', {
+              type: 'square',
+              frequency: 220, // A3
+              duration: 0.2,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.6
+            });
+          }
+          
+          // Level complete victory sound
+          createLevelCompleteSound() {
+            const levelCompleteChain = this.createEffectChain([
+              { type: 'reverb', duration: 2, decay: 0.7 }
+            ]);
+            levelCompleteChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('level_complete_1', 'feedback', {
+              type: 'sine',
+              frequency: 523.25, // C5
+              duration: 0.2,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.7
+            }, levelCompleteChain);
+            
+            this.createOscillatorSound('level_complete_2', 'feedback', {
+              type: 'sine',
+              frequency: 659.25, // E5
+              duration: 0.2,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.7
+            }, levelCompleteChain);
+            
+            this.createOscillatorSound('level_complete_3', 'feedback', {
+              type: 'sine',
+              frequency: 783.99, // G5
+              duration: 0.2,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.7
+            }, levelCompleteChain);
+            
+            this.createOscillatorSound('level_complete_4', 'feedback', {
+              type: 'sine',
+              frequency: 1046.50, // C6
+              duration: 0.4,
+              attack: 0.01,
+              release: 0.3,
+              volume: 0.8
+            }, levelCompleteChain);
+          }
+          
+          // Game over sound
+          createGameOverSound() {
+            const gameOverChain = this.createEffectChain([
+              { type: 'reverb', duration: 2, decay: 0.8 }
+            ]);
+            gameOverChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('game_over', 'feedback', {
+              type: 'sawtooth',
+              frequency: 110, // A2
+              duration: 0.8,
+              attack: 0.01,
+              release: 0.5,
+              frequencyModulation: {
+                frequency: 5,
+                depth: 0.2
+              },
+              volume: 0.7
+            }, gameOverChain);
+          }
+          
+          // Sounds for each critical thinking standard
+          createClaritySound() {
+            const clarityChain = this.createEffectChain([
+              { type: 'reverb', duration: 0.5, decay: 0.3 }
+            ]);
+            clarityChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('clarity', 'feedback', {
+              type: 'sine',
+              frequency: 440, // A4
+              duration: 0.3,
+              attack: 0.05,
+              release: 0.15,
+              volume: 0.6
+            }, clarityChain);
+          }
+          
+          createAccuracySound() {
+            this.createOscillatorSound('accuracy', 'feedback', {
+              type: 'sine',
+              frequency: 493.88, // B4
+              duration: 0.3,
+              attack: 0.01,
+              release: 0.2,
+              volume: 0.6
+            });
+          }
+          
+          createPrecisionSound() {
+            this.createOscillatorSound('precision', 'feedback', {
+              type: 'sine',
+              frequency: 523.25, // C5
+              duration: 0.2,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.6
+            });
+          }
+          
+          createRelevanceSound() {
+            this.createOscillatorSound('relevance', 'feedback', {
+              type: 'sine',
+              frequency: 587.33, // D5
+              duration: 0.25,
+              attack: 0.02,
+              release: 0.15,
+              volume: 0.6
+            });
+          }
+          
+          createDepthSound() {
+            // Create a deeper, richer sound for depth
+            const depthChain = this.createEffectChain([
+              { type: 'reverb', duration: 1.5, decay: 0.7 }
+            ]);
+            depthChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('depth', 'feedback', {
+              type: 'sine',
+              frequency: 196, // G3 - lower note
+              duration: 0.5,
+              attack: 0.1,
+              release: 0.3,
+              volume: 0.7
+            }, depthChain);
+          }
+          
+          createBreadthSound() {
+            // Create a wide, spacious sound for breadth
+            const breadthChain = this.createEffectChain([
+              { type: 'reverb', duration: 2, decay: 0.6 }
+            ]);
+            breadthChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('breadth', 'feedback', {
+              type: 'sine',
+              frequency: 659.25, // E5
+              duration: 0.4,
+              attack: 0.05,
+              release: 0.25,
+              volume: 0.6
+            }, breadthChain);
+          }
+          
+          createLogicSound() {
+            // Create a structured, progressive sound for logic
+            this.createOscillatorSound('logic_1', 'feedback', {
+              type: 'square',
+              frequency: 261.63, // C4
+              duration: 0.15,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.5
+            });
+            
+            this.createOscillatorSound('logic_2', 'feedback', {
+              type: 'square',
+              frequency: 329.63, // E4
+              duration: 0.15,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.5
+            });
+            
+            this.createOscillatorSound('logic_3', 'feedback', {
+              type: 'square',
+              frequency: 392, // G4
+              duration: 0.15,
+              attack: 0.01,
+              release: 0.1,
+              volume: 0.5
+            });
+          }
+          
+          createFairnessSound() {
+            // Create a balanced sound for fairness
+            const fairnessChain = this.createEffectChain([
+              { type: 'reverb', duration: 1, decay: 0.5 }
+            ]);
+            fairnessChain.output.connect(this.categoryGains['feedback']);
+            
+            this.createOscillatorSound('fairness', 'feedback', {
+              type: 'sine',
+              frequency: 698.46, // F5
+              duration: 0.35,
+              attack: 0.05,
+              release: 0.2,
+              volume: 0.6
+            }, fairnessChain);
+          }
+          
+          // Play a success sound sequence
+          playSuccessSequence() {
+            this.play('success_1');
+            this.play('success_2', { delay: 0.16 });
+            this.play('success_3', { delay: 0.32 });
+          }
+          
+          // Play a level complete sequence
+          playLevelCompleteSequence() {
+            this.play('level_complete_1');
+            this.play('level_complete_2', { delay: 0.22 });
+            this.play('level_complete_3', { delay: 0.44 });
+            this.play('level_complete_4', { delay: 0.66 });
+          }
+          
+          // Play sound for specific standard
+          playStandardSound(standard) {
+            switch (standard.toLowerCase()) {
+              case 'clarity':
+                this.play('clarity');
+                break;
+              case 'accuracy':
+                this.play('accuracy');
+                break;
+              case 'precision':
+                this.play('precision');
+                break;
+              case 'relevance':
+                this.play('relevance');
+                break;
+              case 'depth':
+                this.play('depth');
+                break;
+              case 'breadth':
+                this.play('breadth');
+                break;
+              case 'logic':
+                this.play('logic_1');
+                this.play('logic_2', { delay: 0.16 });
+                this.play('logic_3', { delay: 0.32 });
+                break;
+              case 'fairness':
+                this.play('fairness');
+                break;
+            }
+          }
+        }
+
+        // Initialize the sound manager as a global object
+        let soundManager = null;
+
+        // --- Game Constants ---
+        const GRAVITY = 0.3; // Reduced gravity
+        const FRICTION = 0.995; // Slightly less friction
+        const BOUNCE_FACTOR = 0.65; // Less bounce
+        const VELOCITY_SCALE = 0.12; // How much drag translates to velocity
+        const MAX_VELOCITY = 25; // Limit maximum launch speed
+        const TOTAL_LEVELS = 8;
+
+        // --- Game State ---
+        const gameState = {
+            level: 0, // Start at 0, initGame will set to 1
+            score: 0,
+            attempts: 0, // Track number of shot attempts
+            dragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            dragEndX: 0,
+            dragEndY: 0,
+            ballX: 0,
+            ballY: 0,
+            velocityX: 0,
+            velocityY: 0,
+            levelComplete: false,
+            gameLoopId: null,
+            activeBall: null,
+            targetElement: null,
+            obstacleElements: [],
+            gameStarted: false,
+            // Level specific state
+            miniTargets: [],
+            miniTargetsHit: 0,
+            sequentialTargets: [],
+            currentSequentialTargetIndex: 0,
+            balanceZone: null,
+            isOutsideBalanceZone: false,
+            relevantBallType: 'B', // Example for relevance level
+            ballTrailInterval: null,
+            relevanceBalls: [], // Added for relevance level
+        };
+
+        // --- Critical Thinking Standards --- (Added color property)
+        const standards = [
+            {
+                name: "Clarity",
+                description: "Making ideas easy to understand. Clear thinking helps us talk better with friends.", 
+                instruction: "Shoot the ball straight to the target. Watch out for the cloudy blocks!", 
+                color: "#6366F1",
+                example: "Like when you explain the rules of tag so everyone knows how to play!"
+            },
+            {
+                name: "Accuracy",
+                description: "Getting things right. Being accurate helps us solve problems.", 
+                instruction: "Try to hit the bullseye! Not too hard, not too soft.", 
+                color: "#3B82F6",
+                example: "Like counting all your marbles correctly so none get lost!"
+            },
+            {
+                name: "Precision",
+                description: "Being super exact. Precise thinking helps us get things just right.", 
+                instruction: "You need to hit the very middle of the target!", 
+                color: "#8B5CF6",
+                example: "Like measuring exactly 1 cup of flour when baking yummy cookies!"
+            },
+            {
+                name: "Relevance",
+                description: "Focusing on what matters. This helps us not get distracted.", 
+                instruction: "Only the ball with 'R' counts! Ignore the other balls.", 
+                color: "#EC4899",
+                example: "Like remembering to bring your swimsuit to the pool, not your winter coat!"
+            },
+            {
+                name: "Depth",
+                description: "Looking deeper at things. This helps us understand tricky stuff.", 
+                instruction: "Find your way through the maze to reach the target!", 
+                color: "#14B8A6", 
+                example: "Like asking 'why' your plant needs water instead of just watering it!"
+            },
+            {
+                name: "Breadth",
+                description: "Thinking about many different ideas. This helps us see the whole picture.", 
+                instruction: "Hit all the small targets first, then the big one!", 
+                color: "#10B981",
+                example: "Like trying different flavors of ice cream before picking your favorite!"
+            },
+            {
+                name: "Logic",
+                description: "Making sense with our thinking. This helps us figure things out.", 
+                instruction: "Hit the targets in order: 1, then 2, then 3!", 
+                color: "#F59E0B",
+                example: "Like knowing to put on socks before shoes, not the other way around!"
+            },
+            {
+                name: "Fairness",
+                description: "Being nice to all sides. Fair thinking helps everyone feel good.", 
+                instruction: "Stay in the colored zone as you go to the target!", 
+                color: "#0EA5E9",
+                example: "Like sharing your toys so everyone gets a turn to play!"
+            }
+        ];
+
+        // --- DOM Elements ---
+        const gameArea = document.getElementById('game-area');
+        const scoreElement = document.getElementById('score');
+        const levelTitleElement = document.getElementById('level-title');
+        const levelInstructionsElement = document.getElementById('level-instructions');
+        const feedbackElement = document.getElementById('feedback');
+        const feedbackMessageElement = document.getElementById('feedback-message');
+        const feedbackDetailElement = document.getElementById('feedback-detail');
+        const restartButton = document.getElementById('restart-button');
+        const nextLevelButton = document.getElementById('next-level');
+        const gameOverlay = document.getElementById('game-overlay');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const dragIndicatorContainer = document.getElementById('drag-indicator-container');
+
+        // --- Game Initialization ---
+        function initGame() {
+            // Initialize sound manager
+            soundManager = new SoundManager();
+            
+            // Set up sound toggle
+            const soundToggle = document.getElementById('sound-toggle');
+            soundToggle.addEventListener('click', () => {
+                if (soundManager) {
+                    const isMuted = soundManager.toggleMute();
+                    soundToggle.textContent = isMuted ? '🔈' : '🔊';
+                    soundToggle.classList.toggle('muted', !isMuted);
+                    
+                    // Play test sound if unmuting
+                    if (isMuted) {
+                        soundManager.play('button');
+                    }
+                }
+            });
+            
+            showWelcomeOverlay();
+            restartButton.addEventListener('click', restartLevel);
+            nextLevelButton.addEventListener('click', goToNextLevel);
+        }
+
+        function showWelcomeOverlay() {
+            const overlayContent = document.createElement('div');
+            overlayContent.className = 'overlay-content';
+            overlayContent.innerHTML = `
+                <div class="overlay-title">Welcome to Bubbles!</div>
+                <div class="overlay-message">
+                    Click and drag the ball to shoot it! Point where you want it to go, and let go to launch. Try to hit the target! You'll need to get past blocks and follow the special rules for each level.
+                </div>
+                <button id="start-game-btn">Start Playing</button>
+            `;
+            gameOverlay.innerHTML = ''; // Clear previous content
+            gameOverlay.appendChild(overlayContent);
+            gameOverlay.classList.add('active');
+            
+            document.getElementById('start-game-btn').addEventListener('click', () => {
+                // Play button sound
+                if (soundManager) {
+                    soundManager.play('button');
+                }
+                
+                gameOverlay.classList.remove('active');
+                 // Allow time for fade out before starting level
+                 setTimeout(() => {
+                gameOverlay.innerHTML = '';
+                gameState.gameStarted = true;
+                    gameState.level = 0; // Reset level before starting
+                    gameState.score = 0; // Reset score
+                    scoreElement.textContent = 0;
+                    updateLevel(1); // Start level 1
+                 }, 400);
+            });
+        }
+
+        // --- Level Management ---
+        function updateLevel(level) {
+            if (!gameState.gameStarted) return; // Don't update if game hasn't started
+
+            if (level > TOTAL_LEVELS) {
+                showCompletionScreen();
+                return;
+            }
+
+            gameState.level = level;
+            gameState.levelComplete = false;
+            gameState.isOutsideBalanceZone = false; // Reset fairness flag
+            resetLevelSpecificState(level); // Reset state like mini-targets, sequence
+
+            if (gameState.gameLoopId) cancelAnimationFrame(gameState.gameLoopId);
+            if (gameState.ballTrailInterval) clearInterval(gameState.ballTrailInterval);
+
+            updateUIForLevel(level);
+            clearGameArea();
+            createLevelLayout(level);
+
+            // Start game loop for the new level
+            gameState.gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function resetLevelSpecificState(level) {
+             gameState.miniTargets = [];
+             gameState.miniTargetsHit = 0;
+             gameState.sequentialTargets = [];
+             gameState.currentSequentialTargetIndex = 0;
+             gameState.balanceZone = null;
+             gameState.activeBall = null; // Ensure active ball is cleared
+             gameState.obstacleElements = []; // Clear obstacles array
+             gameState.relevanceBalls = []; // Clear any relevance balls from previous play
+             gameState.attempts = 0; // Reset shot attempts counter for new level
+        }
+
+        function updateUIForLevel(level) {
+             const currentStandard = standards[level - 1];
+             levelTitleElement.textContent = `Level ${level}: ${currentStandard.name}`;
+             levelTitleElement.style.background = `linear-gradient(135deg, ${currentStandard.color}, ${getDarkerColor(currentStandard.color)})`;
+             levelTitleElement.classList.add('level-title-transition');
+             setTimeout(() => levelTitleElement.classList.remove('level-title-transition'), 800);
+
+             levelInstructionsElement.textContent = currentStandard.instruction;
+            feedbackElement.classList.add('hidden');
+            nextLevelButton.classList.add('hidden');
+             updateProgressBar(level);
+             document.getElementById('score-display').textContent = `Score: ${gameState.score} | Shots: ${gameState.attempts}`;
+        }
+
+        function clearGameArea() {
+             gameArea.innerHTML = ''; // Clear everything
+             // Re-add persistent containers if needed (like drag indicator)
+            gameArea.appendChild(dragIndicatorContainer);
+            dragIndicatorContainer.innerHTML = ''; // Clear drag indicators
+             gameArea.appendChild(gameOverlay); // Ensure overlay is still there
+             gameState.obstacleElements = []; // Reset obstacles array
+        }
+
+        function updateProgressBar(level) {
+            const progressPercentage = Math.min(100, (level / TOTAL_LEVELS) * 100);
+            progressFill.style.width = `${progressPercentage}%`;
+            progressText.textContent = `Progress: ${level} / ${TOTAL_LEVELS}`;
+        }
+
+        // --- Level Creation ---
+        function createLevelLayout(level) {
+            const currentStandard = standards[level - 1];
+            
+            // Add level badge
+            const levelBadge = document.createElement('div');
+            levelBadge.className = 'level-badge';
+            levelBadge.textContent = level;
+            levelBadge.style.borderColor = currentStandard.color;
+            levelBadge.style.color = currentStandard.color;
+            gameArea.appendChild(levelBadge);
+
+            // Get game area dimensions for responsive positioning
+            const gameAreaWidth = gameArea.clientWidth;
+            const gameAreaHeight = gameArea.clientHeight;
+            
+            // Scale positions based on game area size
+            const scaleFactor = Math.min(gameAreaWidth / 900, gameAreaHeight / 480);
+            
+            // Adjusted positions for mobile responsiveness
+            const positions = getScaledPositions(scaleFactor, gameAreaWidth, gameAreaHeight);
+
+            switch (level) {
+                case 1: createBasicLevel({ 
+                    ballX: positions.leftMargin, 
+                    ballY: positions.centerY, 
+                    targetX: positions.rightMargin, 
+                    targetY: positions.centerY, 
+                    obstacles: [
+                        { x: positions.leftBarrier, y: positions.topSection, width: 30 * scaleFactor, height: 300 * scaleFactor, color: '#CBD5E1' }, 
+                        { x: positions.rightBarrier, y: positions.topSection, width: 30 * scaleFactor, height: 300 * scaleFactor, color: '#CBD5E1' }
+                    ] 
+                }); 
+                break;
+                case 2: createBasicLevel({ 
+                    ballX: positions.leftMargin, 
+                    ballY: positions.centerY, 
+                    targetX: positions.rightMargin, 
+                    targetY: positions.centerY, 
+                    targetSize: 60 * scaleFactor, 
+                    obstacles: [
+                        { x: positions.centerX, y: 0, width: 30 * scaleFactor, height: 180 * scaleFactor }, 
+                        { x: positions.centerX, y: positions.bottomSection, width: 30 * scaleFactor, height: 180 * scaleFactor }
+                    ] 
+                }); 
+                break;
+                case 3: createBasicLevel({ 
+                    ballX: positions.leftMargin, 
+                    ballY: positions.centerY, 
+                    targetX: positions.rightMargin, 
+                    targetY: positions.centerY, 
+                    targetSize: 40 * scaleFactor, 
+                    obstacles: [
+                        { x: positions.quarterWidth, y: positions.centerY - 25 * scaleFactor, width: 300 * scaleFactor, height: 25 * scaleFactor }, 
+                        { x: positions.quarterWidth, y: positions.lowerSection, width: 300 * scaleFactor, height: 25 * scaleFactor }
+                    ] 
+                }); 
+                break;
+                case 4: createRelevanceLevel(positions, scaleFactor); break;
+                case 5: createDepthLevel(positions, scaleFactor); break;
+                case 6: createBreadthLevel(positions, scaleFactor); break;
+                case 7: createLogicLevel(positions, scaleFactor); break;
+                case 8: createFairnessLevel(positions, scaleFactor); break;
+                default: createBasicLevel({ 
+                    ballX: positions.leftMargin, 
+                    ballY: positions.centerY, 
+                    targetX: positions.rightMargin, 
+                    targetY: positions.centerY, 
+                    obstacles: [] 
+                });
+            }
+        }
+
+        // Helper function to compute scaled positions based on game area dimensions
+        function getScaledPositions(scaleFactor, width, height) {
+            return {
+                leftMargin: 80 * scaleFactor,
+                rightMargin: (width - 80 * scaleFactor),
+                centerX: width / 2,
+                centerY: height / 2,
+                quarterWidth: width * 0.25,
+                threeQuarterWidth: width * 0.75,
+                topSection: height * 0.1,
+                bottomSection: height * 0.7,
+                lowerSection: height * 0.6,
+                leftBarrier: width * 0.3,
+                rightBarrier: width * 0.6,
+                ballRadius: 30 * scaleFactor,
+                targetRadius: 40 * scaleFactor
+            };
+        }
+
+        // Use these functions to update the specific level creators
+        function createRelevanceLevel(positions, scaleFactor) {
+            const standard = standards[3]; // Relevance is level 4 (index 3)
+            const colors = [standard.color, '#3498db', '#e74c3c']; // Pink, Blue, Red
+            const types = ['relevant', 'irrelevant', 'irrelevant'];
+            const initials = ['R', 'X', 'Y'];
+            
+            // Calculate vertical spacing based on game area height
+            const spacing = positions.centerY * 0.8;
+            const ballYPositions = [
+                positions.centerY - spacing, 
+                positions.centerY, 
+                positions.centerY + spacing
+            ];
+
+            // Save initial positions for reset
+            gameState.relevanceBalls = [];
+
+            // Create balls
+            for (let i = 0; i < 3; i++) {
+                const ball = createBall(positions.leftMargin, ballYPositions[i], initials[i], colors[i], types[i]);
+                // Store original position for resetting
+                gameState.relevanceBalls.push({
+                    element: ball,
+                    startX: positions.leftMargin,
+                    startY: ballYPositions[i]
+                });
+            }
+            
+            // Target
+            gameState.targetElement = createTarget(positions.rightMargin, positions.centerY, 'R', 80 * scaleFactor, standard.color);
+            
+            // Adjust obstacle positions for smaller screens
+            const obstacleGap = positions.centerY * 0.6;
+            const gameAreaHeight = gameArea.clientHeight;
+            
+            // First set of obstacles
+            createObstacle(positions.leftBarrier, 0, 25 * scaleFactor, positions.centerY - obstacleGap);    // Top piece
+            createObstacle(positions.leftBarrier, positions.centerY + obstacleGap, 25 * scaleFactor, gameAreaHeight - (positions.centerY + obstacleGap));  // Bottom piece
+            
+            // Second set of obstacles
+            createObstacle(positions.rightBarrier, 0, 25 * scaleFactor, positions.centerY - obstacleGap);    // Top piece
+            createObstacle(positions.rightBarrier, positions.centerY + obstacleGap, 25 * scaleFactor, gameAreaHeight - (positions.centerY + obstacleGap));  // Bottom piece
+            
+            // Initial state - no active ball until one is dragged
+            gameState.activeBall = null;
+        }
+
+        function createBall(x, y, text, color, type = 'default') {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.textContent = text;
+            ball.style.left = `${x - 30}px`; // Center based on size
+            ball.style.top = `${y - 30}px`;
+            ball.style.background = `linear-gradient(135deg, ${getLighterColor(color)}, ${color})`;
+            ball.style.borderColor = `rgba(255, 255, 255, 0.8)`;
+            ball.dataset.type = type;
+            gameArea.appendChild(ball);
+            setupBallDragging(ball);
+            return ball;
+        }
+
+        function createTarget(x, y, text, size, color, inactive = false) {
+            const target = document.createElement('div');
+            target.className = 'target';
+             target.style.width = `${size}px`;
+             target.style.height = `${size}px`;
+             target.style.left = `${x - size / 2}px`; // Center
+             target.style.top = `${y - size / 2}px`; // Center
+             target.textContent = text;
+             target.style.borderColor = color;
+             target.style.color = getDarkerColor(color);
+             target.style.backgroundColor = hexToRgba(color, 0.06);
+             if (inactive) {
+                 target.classList.add('inactive');
+             }
+            gameArea.appendChild(target);
+             return target;
+        }
+            
+        function createObstacle(x, y, width, height, color = '#A78BFA') {
+                    const obstacle = document.createElement('div');
+                    obstacle.className = 'obstacle';
+             obstacle.style.left = `${x}px`;
+             obstacle.style.top = `${y}px`;
+             obstacle.style.width = `${width}px`;
+             obstacle.style.height = `${height}px`;
+             obstacle.style.background = `linear-gradient(145deg, ${getLighterColor(color, 60)}, ${color})`;
+                    gameArea.appendChild(obstacle);
+                    gameState.obstacleElements.push(obstacle);
+             return obstacle;
+        }
+
+        function createBasicLevel(config) {
+            const standard = standards[gameState.level - 1];
+            gameState.activeBall = createBall(config.ballX, config.ballY, standard.name.charAt(0), standard.color);
+            gameState.targetElement = createTarget(config.targetX, config.targetY, standard.name, config.targetSize || 80, standard.color);
+
+            (config.obstacles || []).forEach(obs => createObstacle(obs.x, obs.y, obs.width, obs.height, obs.color));
+
+            gameState.ballX = config.ballX;
+            gameState.ballY = config.ballY;
+        }
+
+         function createDepthLevel(positions, scaleFactor) {
+            const standard = standards[4]; // Depth is level 5 (index 4)
+            gameState.activeBall = createBall(positions.leftMargin, positions.centerY, standard.name.charAt(0), standard.color);
+            gameState.targetElement = createTarget(positions.rightMargin, positions.centerY, standard.name, 80 * scaleFactor, standard.color);
+
+             // Layered obstacles with gaps
+             createObstacle(positions.leftBarrier, positions.topSection, 30 * scaleFactor, 150 * scaleFactor); // Left wall 1
+             createObstacle(positions.leftBarrier, positions.lowerSection, 30 * scaleFactor, 150 * scaleFactor); // Left wall 2
+             createObstacle(positions.rightBarrier, positions.topSection, 30 * scaleFactor, 100 * scaleFactor); // Mid wall 1 Top
+             createObstacle(positions.rightBarrier, positions.lowerSection, 30 * scaleFactor, 100 * scaleFactor); // Mid wall 1 Bot
+             createObstacle(positions.centerX, positions.topSection, 30 * scaleFactor, 150 * scaleFactor); // Mid wall 2 Top
+             createObstacle(positions.centerX, positions.lowerSection, 30 * scaleFactor, 150 * scaleFactor); // Mid wall 2 Bot
+             createObstacle(positions.rightBarrier, positions.topSection, 30 * scaleFactor, 100 * scaleFactor); // Right wall 1 Top
+             createObstacle(positions.rightBarrier, positions.lowerSection, 30 * scaleFactor, 100 * scaleFactor); // Right wall 1 Bot
+
+            gameState.ballX = positions.leftMargin;
+            gameState.ballY = positions.centerY;
+        }
+
+         function createBreadthLevel(positions, scaleFactor) {
+             const standard = standards[5]; // Breadth is level 6 (index 5)
+             gameState.activeBall = createBall(positions.leftMargin, positions.centerY, standard.name.charAt(0), standard.color);
+
+             // Mini targets - adjust positions based on game area dimensions
+             const gameAreaWidth = gameArea.clientWidth;
+             const gameAreaHeight = gameArea.clientHeight;
+             
+             const miniTargetPositions = [
+                 {x: positions.quarterWidth, y: gameAreaHeight * 0.2}, 
+                 {x: positions.centerX, y: gameAreaHeight * 0.15}, 
+                 {x: positions.threeQuarterWidth, y: gameAreaHeight * 0.2}, 
+                 {x: positions.quarterWidth, y: gameAreaHeight * 0.8}, 
+                 {x: positions.centerX, y: gameAreaHeight * 0.85}, 
+                 {x: positions.threeQuarterWidth, y: gameAreaHeight * 0.8}
+             ];
+             
+             gameState.miniTargets = miniTargetPositions.map((pos, i) => {
+                 const miniTarget = createTarget(pos.x, pos.y, `V${i+1}`, 40 * scaleFactor, standard.color, false);
+                 miniTarget.dataset.hit = "false";
+                 return miniTarget;
+             });
+
+             // Main target (initially inactive)
+             gameState.targetElement = createTarget(positions.centerX, positions.centerY, standard.name, 80 * scaleFactor, standard.color, true);
+
+             gameState.ballX = positions.leftMargin;
+             gameState.ballY = positions.centerY;
+         }
+
+        function createLogicLevel(positions, scaleFactor) {
+             const standard = standards[6]; // Logic is level 7 (index 6)
+             gameState.activeBall = createBall(positions.leftMargin, positions.centerY, standard.name.charAt(0), standard.color);
+
+             const gameAreaHeight = gameArea.clientHeight;
+             
+             // Position targets responsively
+             const targetPositions = [
+                 {x: positions.quarterWidth, y: gameAreaHeight * 0.2, size: 50 * scaleFactor, label: '1', active: true},
+                 {x: positions.centerX, y: gameAreaHeight * 0.2, size: 50 * scaleFactor, label: '2', active: false},
+                 {x: positions.threeQuarterWidth, y: gameAreaHeight * 0.2, size: 50 * scaleFactor, label: '3', active: false},
+                 {x: positions.centerX, y: gameAreaHeight * 0.75, size: 80 * scaleFactor, label: standard.name, active: false} // Final target
+             ];
+
+             gameState.sequentialTargets = targetPositions.map((t, i) => {
+                 const targetEl = createTarget(t.x, t.y, t.label, t.size, standard.color, !t.active);
+                 if (i === targetPositions.length - 1) gameState.targetElement = targetEl; // Assign final target
+                 return targetEl;
+             });
+             gameState.currentSequentialTargetIndex = 0; // Start needing to hit target 0
+
+             // Responsive barrier
+             const gameAreaWidth = gameArea.clientWidth;
+             createObstacle(gameAreaWidth * 0.15, gameAreaHeight * 0.4, gameAreaWidth * 0.7, 20 * scaleFactor); // Barrier below sequence
+
+             gameState.ballX = positions.leftMargin;
+             gameState.ballY = positions.centerY;
+        }
+
+        function createFairnessLevel(positions, scaleFactor) {
+             const standard = standards[7]; // Fairness is level 8 (index 7)
+             gameState.activeBall = createBall(positions.leftMargin, positions.centerY, standard.name.charAt(0), standard.color);
+             gameState.targetElement = createTarget(positions.rightMargin, positions.centerY, standard.name, 80 * scaleFactor, standard.color);
+
+             const gameAreaWidth = gameArea.clientWidth;
+             const gameAreaHeight = gameArea.clientHeight;
+             
+             // Balance zone visuals - responsive to game area height
+             const zoneY = gameAreaHeight * 0.3;
+             const zoneHeight = gameAreaHeight * 0.4;
+             
+             gameState.balanceZone = { y: zoneY, height: zoneHeight }; // Store coordinates
+             const zoneVisual = document.createElement('div');
+             zoneVisual.style.position = 'absolute';
+             zoneVisual.style.left = '0px';
+             zoneVisual.style.top = `${zoneY}px`;
+             zoneVisual.style.width = `${gameAreaWidth}px`;
+             zoneVisual.style.height = `${zoneHeight}px`;
+             zoneVisual.style.backgroundColor = hexToRgba(standard.color, 0.05);
+             zoneVisual.style.borderTop = `2px dashed ${standard.color}`;
+             zoneVisual.style.borderBottom = `2px dashed ${standard.color}`;
+             zoneVisual.style.zIndex = '1';
+             zoneVisual.id = 'balance-zone-visual'; // For potential styling/updates
+             gameArea.appendChild(zoneVisual);
+
+             // Obstacles forcing deviation - responsive
+             const obstacleHeight = gameAreaHeight * 0.25;
+             createObstacle(positions.quarterWidth, 0, 30 * scaleFactor, obstacleHeight); // Top obstacle
+             createObstacle(positions.quarterWidth, gameAreaHeight - obstacleHeight, 30 * scaleFactor, obstacleHeight); // Bottom obstacle
+             createObstacle(positions.threeQuarterWidth, 0, 30 * scaleFactor, obstacleHeight); // Top obstacle 2
+             createObstacle(positions.threeQuarterWidth, gameAreaHeight - obstacleHeight, 30 * scaleFactor, obstacleHeight); // Bottom obstacle 2
+
+             gameState.ballX = positions.leftMargin;
+             gameState.ballY = positions.centerY;
+             gameState.isOutsideBalanceZone = false; // Reset flag
+         }
+
+        // --- Ball Dragging & Launch ---
+        function setupBallDragging(ball) {
+            ball.addEventListener('mousedown', (e) => handleDragStart(e, ball));
+            ball.addEventListener('touchstart', (e) => {
+                // Prevent default touch behaviors like scrolling
+                e.preventDefault();
+                handleDragStart(e, ball);
+            }, { passive: false });
+        }
+
+        function handleDragStart(e, ball) {
+            if (gameState.levelComplete) return;
+            e.preventDefault(); // Prevent default drag behaviors
+
+            // Set this ball as the active one if it's a multi-ball level
+            if (!gameState.activeBall || gameState.level === 4) {
+                 // Reset previous active ball if switching in relevance level
+                if (gameState.activeBall && gameState.activeBall !== ball && gameState.level === 4) {
+                     // Reset the previous ball's position
+                     const prevBallInfo = gameState.relevanceBalls.find(b => b.element === gameState.activeBall);
+                     if (prevBallInfo) {
+                         // Reset position of previously active ball
+                         gameState.activeBall.style.left = `${prevBallInfo.startX - 30}px`;
+                         gameState.activeBall.style.top = `${prevBallInfo.startY - 30}px`;
+                     }
+                }
+                
+                gameState.activeBall = ball;
+                const ballRect = ball.getBoundingClientRect();
+                const gameAreaRect = gameArea.getBoundingClientRect();
+                gameState.ballX = ballRect.left - gameAreaRect.left + ball.clientWidth / 2;
+                gameState.ballY = ballRect.top - gameAreaRect.top + ball.clientHeight / 2;
+                gameState.velocityX = 0;
+                gameState.velocityY = 0;
+                stopBallTrail(); // Stop previous trail if any
+            }
+
+            gameState.dragging = true;
+            gameState.activeBall.style.cursor = 'grabbing';
+
+            const pos = getEventPosition(e);
+            gameState.dragStartX = pos.x;
+            gameState.dragStartY = pos.y;
+            gameState.dragEndX = pos.x; // Initialize end same as start
+            gameState.dragEndY = pos.y;
+
+            // Attach move/end listeners to document/window for wider capture area
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('mouseup', handleDragEnd);
+            document.addEventListener('touchmove', handleDragMove, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
+            document.addEventListener('touchcancel', handleDragEnd); // Handle touch cancel events
+
+            drawDragIndicator(); // Initial draw
+        }
+
+        function handleDragMove(e) {
+            if (!gameState.dragging) return;
+            e.preventDefault(); // Prevent scrolling on mobile
+
+            const pos = getEventPosition(e);
+            gameState.dragEndX = pos.x;
+            gameState.dragEndY = pos.y;
+
+            drawDragIndicator();
+        }
+
+        function handleDragEnd(e) {
+            if (!gameState.dragging) return;
+            
+            // Prevent default for touch events to avoid unwanted behaviors
+            if (e.type.startsWith('touch')) {
+                e.preventDefault();
+            }
+
+            gameState.dragging = false;
+            if (gameState.activeBall) gameState.activeBall.style.cursor = 'grab';
+            clearDragIndicator();
+
+            const dragVectorX = gameState.dragStartX - gameState.dragEndX;
+            const dragVectorY = gameState.dragStartY - gameState.dragEndY;
+            let launchMagnitude = Math.sqrt(dragVectorX ** 2 + dragVectorY ** 2) * VELOCITY_SCALE;
+
+            // Clamp velocity
+            launchMagnitude = Math.min(launchMagnitude, MAX_VELOCITY);
+
+            if (launchMagnitude > 0.5) { // Only launch if drag was significant
+                 // Count this as an attempt
+                 gameState.attempts++;
+                 updateAttemptsDisplay(); // Update the display to show current attempts
+                 
+                 const angle = Math.atan2(dragVectorY, dragVectorX);
+                 gameState.velocityX = Math.cos(angle) * launchMagnitude;
+                 gameState.velocityY = Math.sin(angle) * launchMagnitude;
+                 startBallTrail(); // Start trail effect after launch
+                 
+                 // Play launch sound
+                 if (soundManager) {
+                     soundManager.play('launch', { 
+                         playbackRate: Math.min(1.5, Math.max(0.8, launchMagnitude / MAX_VELOCITY * 1.3)) 
+                     });
+                 }
+            } else {
+                gameState.velocityX = 0;
+                gameState.velocityY = 0;
+            }
+
+            // Remove document listeners
+            document.removeEventListener('mousemove', handleDragMove);
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.removeEventListener('touchmove', handleDragMove);
+            document.removeEventListener('touchend', handleDragEnd);
+            document.removeEventListener('touchcancel', handleDragEnd);
+        }
+
+        function getEventPosition(e) {
+            // Touch event handling
+            if (e.type.startsWith('touch')) {
+                if (e.touches && e.touches.length > 0) {
+                    // Get the game area's position
+                    const gameAreaRect = gameArea.getBoundingClientRect();
+                    // Return touch position relative to page
+                    return { 
+                        x: e.touches[0].clientX, 
+                        y: e.touches[0].clientY 
+                    };
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    // For touchend event where touches is empty
+                    return { 
+                        x: e.changedTouches[0].clientX, 
+                        y: e.changedTouches[0].clientY 
+                    };
+                }
+            }
+            // Mouse event handling
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        // Add a mobile detection function that we can use to adjust gameplay settings
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                || (window.innerWidth <= 768);
+        }
+
+        // Adjust physics constants for better mobile gameplay if needed
+        function adjustForMobile() {
+            if (isMobileDevice()) {
+                // Make dragging more sensitive on mobile
+                const mobileVelocityScale = 0.15; // Slightly more sensitive
+                VELOCITY_SCALE = mobileVelocityScale;
+            }
+        }
+
+        // --- Visual Indicators ---
+        function drawDragIndicator() {
+            clearDragIndicator();
+            if (!gameState.activeBall || !gameState.dragging) return;
+
+                const gameAreaRect = gameArea.getBoundingClientRect();
+            // Ball center relative to game area
+            const ballCenterX = gameState.ballX;
+            const ballCenterY = gameState.ballY;
+
+            // Current drag point relative to game area
+            const currentDragXGame = gameState.dragEndX - gameAreaRect.left;
+            const currentDragYGame = gameState.dragEndY - gameAreaRect.top;
+
+            // Vector from ball *towards* drag start (opposite of launch direction)
+            const vectorX = (gameState.dragStartX - gameState.dragEndX);
+            const vectorY = (gameState.dragStartY - gameState.dragEndY);
+            const magnitude = Math.sqrt(vectorX**2 + vectorY**2);
+            const angle = Math.atan2(vectorY, vectorX);
+
+            const displayLength = Math.min(magnitude, 150); // Limit visual length
+
+            // Create the main line indicator
+            const line = document.createElement('div');
+            line.id = 'drag-line';
+            line.style.width = `${displayLength}px`;
+            line.style.left = `${ballCenterX}px`;
+            line.style.top = `${ballCenterY - 2}px`; // Center vertically
+            line.style.transform = `rotate(${angle * 180 / Math.PI}deg)`;
+            dragIndicatorContainer.appendChild(line);
+
+             // Add dots along the line for power indication
+             const numDots = Math.floor(displayLength / 20); // More dots for longer drag
+             for (let i = 1; i <= numDots; i++) {
+                 const dot = document.createElement('div');
+                 dot.className = 'drag-dot';
+                 const dotDist = (i / (numDots + 1)) * displayLength;
+                 dot.style.left = `${ballCenterX + Math.cos(angle) * dotDist - 4}px`; // Center dot
+                 dot.style.top = `${ballCenterY + Math.sin(angle) * dotDist - 4}px`;
+                 dragIndicatorContainer.appendChild(dot);
+             }
+        }
+
+        function clearDragIndicator() {
+            dragIndicatorContainer.innerHTML = '';
+        }
+
+        function startBallTrail() {
+             stopBallTrail(); // Clear existing interval if any
+             if (!gameState.activeBall) return;
+
+             gameState.ballTrailInterval = setInterval(() => {
+                 if (!gameState.activeBall || gameState.levelComplete || (Math.abs(gameState.velocityX) < 0.5 && Math.abs(gameState.velocityY) < 0.5)) {
+                     stopBallTrail();
+                     return;
+                 }
+
+                 const trail = document.createElement('div');
+                 trail.className = 'ball-trail';
+                 const size = 5 + Math.abs(gameState.velocityX) + Math.abs(gameState.velocityY); // Size based on speed
+                 trail.style.width = `${Math.min(15, size)}px`;
+                 trail.style.height = `${Math.min(15, size)}px`;
+                 trail.style.left = `${gameState.ballX - parseFloat(trail.style.width) / 2}px`;
+                 trail.style.top = `${gameState.ballY - parseFloat(trail.style.height) / 2}px`;
+                 trail.style.opacity = '0.6'; // Initial opacity
+                 gameArea.appendChild(trail);
+
+                 // Fade out and remove
+                 trail.animate(
+                     [ { opacity: 0.6, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.3)' } ],
+                     { duration: 500, easing: 'ease-out' }
+                 ).onfinish = () => trail.remove();
+
+             }, 30); // Create trail particle frequently
+        }
+
+        function stopBallTrail() {
+            if (gameState.ballTrailInterval) {
+                clearInterval(gameState.ballTrailInterval);
+                gameState.ballTrailInterval = null;
+            }
+        }
+
+        function createBounceEffect(x, y) {
+             const effect = document.createElement('div');
+             effect.className = 'bounce-effect';
+             effect.style.left = `${x - 15}px`;
+             effect.style.top = `${y - 15}px`;
+             gameArea.appendChild(effect);
+             effect.animate(
+                 [ { opacity: 0.8, transform: 'scale(0.3)' }, { opacity: 0, transform: 'scale(1.2)' } ],
+                 { duration: 400, easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' }
+             ).onfinish = () => effect.remove();
+             // playSound('bounce'); // Placeholder
+        }
+
+
+        // --- Game Loop & Physics ---
+        function gameLoop() {
+            if (gameState.levelComplete || !gameState.gameStarted) {
+                 stopBallTrail();
+                 return; // Stop loop if level complete or game not started
+            }
+
+            if (!gameState.dragging && gameState.activeBall && (Math.abs(gameState.velocityX) > 0.1 || Math.abs(gameState.velocityY) > 0.1)) {
+                 // Apply physics only if ball exists and has velocity
+                gameState.velocityY += GRAVITY;
+                gameState.ballX += gameState.velocityX;
+                gameState.ballY += gameState.velocityY;
+                gameState.velocityX *= FRICTION;
+                gameState.velocityY *= FRICTION;
+
+                handleCollisions(); // Check boundaries and obstacles
+                updateBallPosition(); // Update DOM
+
+                checkLevelSpecificConditions(); // Handle fairness zone etc.
+                checkTargetCollision(); // Check win condition
+
+                // Stop ball if moving very slowly
+                if (Math.abs(gameState.velocityX) < 0.1 && Math.abs(gameState.velocityY) < 0.1 && Math.abs(gameState.ballY + (gameState.activeBall.clientHeight / 2) - gameArea.clientHeight) < 1) {
+                     gameState.velocityX = 0;
+                     gameState.velocityY = 0;
+                     stopBallTrail();
+                 }
+
+            } else if (!gameState.dragging && gameState.activeBall) {
+                // Ball has stopped or hasn't been launched yet
+                stopBallTrail();
+            }
+
+
+            gameState.gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function handleCollisions() {
+            if (!gameState.activeBall) return;
+            const ballRadius = gameState.activeBall.clientWidth / 2;
+            const gameWidth = gameArea.clientWidth;
+            const gameHeight = gameArea.clientHeight;
+
+            // Boundaries
+            if (gameState.ballX - ballRadius < 0) { handleCollision(ballRadius, gameState.ballY, 1, 0); }
+            if (gameState.ballX + ballRadius > gameWidth) { handleCollision(gameWidth - ballRadius, gameState.ballY, -1, 0); }
+            if (gameState.ballY - ballRadius < 0) { handleCollision(gameState.ballX, ballRadius, 0, 1); }
+            if (gameState.ballY + ballRadius > gameHeight) { handleCollision(gameState.ballX, gameHeight - ballRadius, 0, -1); }
+
+            // Obstacles
+             gameState.obstacleElements.forEach(obstacle => {
+                 const obsRect = obstacle.getBoundingClientRect();
+                 const gameRect = gameArea.getBoundingClientRect();
+                 const obsX = obsRect.left - gameRect.left;
+                 const obsY = obsRect.top - gameRect.top;
+                 const obsW = obsRect.width;
+                 const obsH = obsRect.height;
+
+                 const closestX = Math.max(obsX, Math.min(gameState.ballX, obsX + obsW));
+                 const closestY = Math.max(obsY, Math.min(gameState.ballY, obsY + obsH));
+                 const distX = gameState.ballX - closestX;
+                 const distY = gameState.ballY - closestY;
+                 const distanceSq = distX ** 2 + distY ** 2;
+
+                 if (distanceSq < ballRadius ** 2) {
+                     const distance = Math.sqrt(distanceSq);
+                     const normalX = distance === 0 ? 1 : distX / distance; // Avoid division by zero
+                     const normalY = distance === 0 ? 0 : distY / distance;
+                     handleCollision(closestX + normalX * ballRadius, closestY + normalY * ballRadius, normalX, normalY);
+                 }
+             });
+        }
+
+        function handleCollision(correctedX, correctedY, normalX, normalY) {
+             gameState.ballX = correctedX;
+             gameState.ballY = correctedY;
+             const dotProduct = gameState.velocityX * normalX + gameState.velocityY * normalY;
+             gameState.velocityX = (gameState.velocityX - 2 * dotProduct * normalX) * BOUNCE_FACTOR;
+             gameState.velocityY = (gameState.velocityY - 2 * dotProduct * normalY) * BOUNCE_FACTOR;
+             createBounceEffect(gameState.ballX, gameState.ballY);
+             
+             // Play bounce sound with playback rate based on velocity
+             if (soundManager) {
+                 const velocity = Math.sqrt(gameState.velocityX ** 2 + gameState.velocityY ** 2);
+                 const isObstacle = Math.abs(normalX) < 1 && Math.abs(normalY) < 1;
+                 
+                 if (isObstacle) {
+                     soundManager.play('collision', { 
+                         playbackRate: Math.min(1.3, Math.max(0.7, velocity / MAX_VELOCITY * 1.2)) 
+                     });
+                 } else {
+                     soundManager.play('bounce', { 
+                         playbackRate: Math.min(1.3, Math.max(0.7, velocity / MAX_VELOCITY * 1.2)) 
+                     });
+                 }
+             }
+             
+             // Clamp velocity after bounce to prevent excessive speed gain
+             const speed = Math.sqrt(gameState.velocityX**2 + gameState.velocityY**2);
+             if (speed > MAX_VELOCITY * 0.8) { // Allow slightly higher speed after bounce
+                 gameState.velocityX *= (MAX_VELOCITY * 0.8) / speed;
+                 gameState.velocityY *= (MAX_VELOCITY * 0.8) / speed;
+             }
+        }
+
+        function updateBallPosition() {
+            if (!gameState.activeBall) return;
+             const ballRadius = gameState.activeBall.clientWidth / 2;
+                gameState.activeBall.style.left = `${gameState.ballX - ballRadius}px`;
+                gameState.activeBall.style.top = `${gameState.ballY - ballRadius}px`;
+             // Subtle rotation based on horizontal velocity
+             const rotationSpeedFactor = 5;
+             const rotation = (gameState.activeBall.currentRotation || 0) + gameState.velocityX * rotationSpeedFactor;
+             gameState.activeBall.style.transform = `rotate(${rotation}deg)`;
+             gameState.activeBall.currentRotation = rotation;
+        }
+
+        // --- Level Specific Logic ---
+        function checkLevelSpecificConditions() {
+            switch (gameState.level) {
+                case 6: checkBreadthTargets(); break;
+                case 7: checkLogicTargets(); break;
+                case 8: checkFairnessZone(); break;
+            }
+        }
+
+        function checkBreadthTargets() {
+             if (!gameState.activeBall || gameState.levelComplete) return;
+                        let allHit = true;
+                        gameState.miniTargets.forEach((target, index) => {
+                 if (target.dataset.hit === "false") {
+                            const targetRect = target.getBoundingClientRect();
+                            const gameAreaRect = gameArea.getBoundingClientRect();
+                            const targetX = targetRect.left - gameAreaRect.left + target.clientWidth / 2;
+                            const targetY = targetRect.top - gameAreaRect.top + target.clientHeight / 2;
+                            const dx = gameState.ballX - targetX;
+                            const dy = gameState.ballY - targetY;
+                    const distanceSq = dx ** 2 + dy ** 2;
+                    const hitRadiusSq = (target.clientWidth / 2 + gameState.activeBall.clientWidth / 2) ** 2;
+                            
+                    if (distanceSq < hitRadiusSq) {
+                                target.dataset.hit = 'true';
+                         target.style.backgroundColor = hexToRgba(standards[5].color, 0.3); // Use level color
+                         target.style.borderColor = getDarkerColor(standards[5].color);
+                                target.classList.add('success-animation');
+                         gameState.miniTargetsHit++;
+                         
+                         // Play mini target hit sound
+                         if (soundManager) {
+                             soundManager.play('target_hit', { playbackRate: 0.8 + (index * 0.1) });
+                         }
+                     } else {
+                         allHit = false; // If any non-hit target wasn't hit this frame
+                     }
+                 }
+             });
+
+             // Activate main target if all mini-targets are hit
+             if (gameState.miniTargetsHit === gameState.miniTargets.length && gameState.targetElement.classList.contains('inactive')) {
+                 gameState.targetElement.classList.remove('inactive');
+                 
+                 // Play success sequence when all mini targets are hit
+                 if (soundManager) {
+                     soundManager.playSuccessSequence();
+                 }
+             }
+        }
+
+         function checkLogicTargets() {
+             if (!gameState.activeBall || gameState.levelComplete) return; // Remove the condition that prevents checking when reaching the final target
+             
+             // Only process if we haven't completed all targets yet
+             if (gameState.currentSequentialTargetIndex < gameState.sequentialTargets.length) {
+                 const currentTargetElement = gameState.sequentialTargets[gameState.currentSequentialTargetIndex];
+                 if (currentTargetElement && !currentTargetElement.classList.contains('inactive')) { // Check if target exists and is active
+                     const targetRect = currentTargetElement.getBoundingClientRect();
+                     const gameAreaRect = gameArea.getBoundingClientRect();
+                     const targetX = targetRect.left - gameAreaRect.left + currentTargetElement.clientWidth / 2;
+                     const targetY = targetRect.top - gameAreaRect.top + currentTargetElement.clientHeight / 2;
+                     const dx = gameState.ballX - targetX;
+                     const dy = gameState.ballY - targetY;
+                     const distanceSq = dx ** 2 + dy ** 2;
+                     const hitRadiusSq = (currentTargetElement.clientWidth / 2 + gameState.activeBall.clientWidth / 2) ** 2;
+
+                     if (distanceSq < hitRadiusSq) {
+                         // Hit the correct target in sequence
+                         currentTargetElement.classList.add('inactive'); // Deactivate current
+                         currentTargetElement.classList.add('success-animation');
+                         
+                         // Play sequence hit sound
+                         if (soundManager) {
+                             soundManager.play('target_hit', { 
+                                 playbackRate: 0.9 + (gameState.currentSequentialTargetIndex * 0.1) 
+                             });
+                         }
+
+                         gameState.currentSequentialTargetIndex++; // Move to next target index
+
+                         // Activate the next target (including the final one)
+                         if (gameState.currentSequentialTargetIndex < gameState.sequentialTargets.length) {
+                             gameState.sequentialTargets[gameState.currentSequentialTargetIndex].classList.remove('inactive');
+                         }
+                     }
+                 }
+             }
+         }
+
+         function checkFairnessZone() {
+             if (!gameState.balanceZone || !gameState.activeBall) return;
+             const ballRadius = gameState.activeBall.clientHeight / 2;
+             const isInZone = gameState.ballY - ballRadius >= gameState.balanceZone.y &&
+                              gameState.ballY + ballRadius <= gameState.balanceZone.y + gameState.balanceZone.height;
+
+             if (!isInZone) {
+                 gameState.isOutsideBalanceZone = true; // Mark that the ball went outside
+                 const zoneVisual = document.getElementById('balance-zone-visual');
+                 if (zoneVisual && !zoneVisual.classList.contains('violated')) {
+                     zoneVisual.classList.add('violated');
+                     zoneVisual.style.backgroundColor = hexToRgba(standards[7].color, 0.15); // Darker red
+                     zoneVisual.style.borderColor = standards[7].color; // Red border
+                     
+                     // Play fairness violation sound
+                     if (soundManager) {
+                         soundManager.play('error');
+                     }
+                     
+                      // Reset visual after a delay
+                            setTimeout(() => {
+                         if(zoneVisual) {
+                             zoneVisual.classList.remove('violated');
+                              zoneVisual.style.backgroundColor = hexToRgba(standards[7].color, 0.05);
+                              zoneVisual.style.borderColor = standards[7].color;
+                         }
+                     }, 500);
+                 }
+             }
+         }
+
+
+        // --- Win Condition Check ---
+        function checkTargetCollision() {
+            if (gameState.levelComplete || !gameState.targetElement || !gameState.activeBall || gameState.targetElement.classList.contains('inactive')) return;
+
+                const targetRect = gameState.targetElement.getBoundingClientRect();
+                const gameAreaRect = gameArea.getBoundingClientRect();
+            const targetX = targetRect.left - gameAreaRect.left + targetRect.width / 2;
+            const targetY = targetRect.top - gameAreaRect.top + targetRect.height / 2;
+                const dx = gameState.ballX - targetX;
+                const dy = gameState.ballY - targetY;
+            const distanceSq = dx ** 2 + dy ** 2;
+            // Use radii for collision check
+            const hitRadiusSq = (targetRect.width / 2 + gameState.activeBall.clientWidth / 2) ** 2;
+                
+                let targetHit = false;
+                
+            if (distanceSq < hitRadiusSq) {
+                 // Base condition: collision happened
+                 switch (gameState.level) {
+                     case 3: // Precision - check distance to center more strictly
+                         const precisionRadiusSq = (10 + gameState.activeBall.clientWidth / 2) ** 2; // Smaller radius check
+                         targetHit = distanceSq < precisionRadiusSq;
+                        break;
+                     case 4: // Relevance - check ball type
+                         targetHit = gameState.activeBall.dataset.type === 'relevant';
+                        break;
+                     case 6: // Breadth - check if all mini targets were hit
+                         targetHit = gameState.miniTargetsHit === gameState.miniTargets.length;
+                        break;
+                     case 7: // Logic - check if it's the final target in sequence
+                         // We need to check that we've completed the sequence (hit all 3 targets)
+                         // The currentSequentialTargetIndex should be exactly at the last position (3)
+                         targetHit = gameState.currentSequentialTargetIndex === gameState.sequentialTargets.length - 1;
+                        break;
+                     case 8: // Fairness - check if ball *never* went out of zone
+                         targetHit = !gameState.isOutsideBalanceZone;
+                         break;
+                     default: // Levels 1, 2, 5
+                                targetHit = true;
+                            }
+                }
+                
+                if (targetHit) {
+                    // Play target hit sound before level completion
+                    if (soundManager) {
+                        soundManager.play('target_hit');
+                    }
+                    levelCompleted();
+            } else if (gameState.level === 4 && distanceSq < hitRadiusSq && gameState.activeBall.dataset.type !== 'relevant') {
+                 // Handle hitting target with wrong ball in relevance level
+                 showTemporaryFeedback("Oops! Wrong ball!", "You need to use the R ball.", "warning");
+                 resetBallToStart(gameState.activeBall); // Reset only the wrong ball
+                 
+                 // Play error sound
+                 if (soundManager) {
+                     soundManager.play('error');
+                 }
+            } else if (gameState.level === 8 && distanceSq < hitRadiusSq && gameState.isOutsideBalanceZone) {
+                 // Handle hitting target after violating fairness
+                 showTemporaryFeedback("Almost!", "Try to stay in the colored zone.", "warning");
+                 resetBallToStart(gameState.activeBall); // Reset ball
+                 gameState.isOutsideBalanceZone = false; // Reset flag for next try
+                 
+                 // Play error sound
+                 if (soundManager) {
+                     soundManager.play('error');
+                 }
+            }
+        }
+
+        // --- Level Completion & Game End ---
+        function levelCompleted() {
+            if (gameState.levelComplete) return; // Prevent multiple completions
+
+            gameState.levelComplete = true;
+            stopBallTrail();
+            if (gameState.gameLoopId) cancelAnimationFrame(gameState.gameLoopId);
+            
+            // Play level complete sound
+            if (soundManager) {
+                soundManager.playLevelCompleteSequence();
+                // Also play the standard-specific sound
+                setTimeout(() => {
+                    soundManager.playStandardSound(standards[gameState.level - 1].name);
+                }, 1200);
+            }
+            
+            gameState.targetElement.classList.add('success-animation');
+            gameState.targetElement.style.backgroundColor = hexToRgba(standards[gameState.level - 1].color, 0.2);
+            gameState.targetElement.style.borderColor = getDarkerColor(standards[gameState.level - 1].color);
+            
+            // Create multiple confetti bursts for more dramatic effect
+            createConfettiEffect(gameState.targetElement, 200); // First burst from target
+            
+            // Secondary bursts after short delays (more dramatic)
+            setTimeout(() => createConfettiEffect(gameState.targetElement, 100), 300);
+            setTimeout(() => createConfettiEffect(gameArea, 80), 600);
+            
+            const currentStandard = standards[gameState.level - 1];
+            
+            // Calculate score based on attempts
+            const baseScore = 200; // Base score for completing the level
+            const attemptPenalty = Math.min(150, 30 * (gameState.attempts - 1)); // Penalty for each attempt beyond the first
+            const levelBonus = gameState.level * 20; // Bonus for higher levels
+            const scoreIncrease = Math.max(50, baseScore + levelBonus - attemptPenalty); // Ensure minimum score of 50
+            
+            // Create cute modal with example
+            const overlayContent = document.createElement('div');
+            overlayContent.className = 'overlay-content';
+            overlayContent.innerHTML = `
+                <div class="overlay-title" style="color: ${currentStandard.color};">You used ${currentStandard.name}!</div>
+                <div class="overlay-message">
+                    <p>${currentStandard.description}</p>
+                    <div style="margin: 15px 0; padding: 15px; background: ${hexToRgba(currentStandard.color, 0.1)}; border-radius: 12px;">
+                        ${currentStandard.example}
+                    </div>
+                    <p>${gameState.attempts === 1 ? 
+                      `Wow! First try! +${scoreIncrease} points` : 
+                      `You did it in ${gameState.attempts} shots! +${scoreIncrease} points`}</p>
+                </div>
+                <button id="continue-btn">Continue</button>
+            `;
+            gameOverlay.innerHTML = '';
+            gameOverlay.appendChild(overlayContent);
+            gameOverlay.classList.add('active');
+            
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                // Play button sound
+                if (soundManager) {
+                    soundManager.play('button');
+                }
+                
+                gameOverlay.classList.remove('active');
+                setTimeout(() => {
+                    goToNextLevel(); // Automatically go to next level instead of showing the button
+                }, 400);
+            });
+
+            // Show feedback below game area too
+            feedbackMessageElement.textContent = `Great job with ${currentStandard.name}!`;
+            if (gameState.attempts === 1) {
+                feedbackDetailElement.textContent = `Perfect! First try! +${scoreIncrease} points`;
+            } else {
+                feedbackDetailElement.textContent = `${gameState.attempts} attempts. +${scoreIncrease} points`;
+            }
+
+            const oldScore = gameState.score;
+            gameState.score += scoreIncrease;
+            animateScoreUpdate(oldScore, gameState.score);
+        }
+
+        function showCompletionScreen() {
+            const overlayContent = document.createElement('div');
+            overlayContent.className = 'overlay-content';
+            overlayContent.innerHTML = `
+                <div class="overlay-title">You Win!</div>
+                <div class="overlay-message">
+                    Amazing job! You finished all the levels!
+                    Your score: <strong style="color: var(--primary-dark);">${gameState.score}</strong>
+                </div>
+                <button id="replay-game-btn">Play Again</button>
+            `;
+            gameOverlay.innerHTML = '';
+            gameOverlay.appendChild(overlayContent);
+            gameOverlay.classList.add('active');
+            
+            // Play game complete sound
+            if (soundManager) {
+                soundManager.play('game_over');
+                setTimeout(() => soundManager.playSuccessSequence(), 1000);
+            }
+            
+            // Epic confetti celebration - multiple bursts from different locations
+            createConfettiEffect(gameArea, 300); // First massive burst
+            
+            // Secondary bursts for extended celebration
+            setTimeout(() => {
+                // Left side burst
+                const leftBurst = document.createElement('div');
+                leftBurst.style.position = 'absolute';
+                leftBurst.style.left = '20%';
+                leftBurst.style.top = '30%';
+                gameArea.appendChild(leftBurst);
+                createConfettiEffect(leftBurst, 150);
+                setTimeout(() => leftBurst.remove(), 3000);
+                
+                if (soundManager) {
+                    soundManager.play('success_3', { playbackRate: 1.2 });
+                }
+            }, 700);
+            
+            setTimeout(() => {
+                // Right side burst
+                const rightBurst = document.createElement('div');
+                rightBurst.style.position = 'absolute';
+                rightBurst.style.left = '80%';
+                rightBurst.style.top = '30%';
+                gameArea.appendChild(rightBurst);
+                createConfettiEffect(rightBurst, 150);
+                setTimeout(() => rightBurst.remove(), 3000);
+                
+                if (soundManager) {
+                    soundManager.play('success_2', { playbackRate: 0.9 });
+                }
+            }, 1400);
+            
+            setTimeout(() => {
+                // Final center burst
+                const centerBurst = document.createElement('div');
+                centerBurst.style.position = 'absolute';
+                centerBurst.style.left = '50%';
+                centerBurst.style.top = '50%';
+                gameArea.appendChild(centerBurst);
+                createConfettiEffect(centerBurst, 200);
+                setTimeout(() => centerBurst.remove(), 3000);
+                
+                if (soundManager) {
+                    soundManager.play('success_1', { playbackRate: 1.1 });
+                }
+            }, 2100);
+
+            document.getElementById('replay-game-btn').addEventListener('click', () => {
+                // Play button sound
+                if (soundManager) {
+                    soundManager.play('button');
+                }
+                
+                gameOverlay.classList.remove('active');
+                setTimeout(() => {
+                    // Redirect to the splash screen instead of restarting the game
+                    window.location.href = 'game-splashscreen.html';
+                }, 400);
+            });
+        }
+
+
+        // --- UI Updates & Effects ---
+         function animateScoreUpdate(from, to) {
+             let current = from;
+             const increment = Math.max(1, Math.floor((to - from) / 30)); // Adjust increment for speed
+             const interval = setInterval(() => {
+                 current += increment;
+                 if (current >= to) {
+                     current = to;
+                     clearInterval(interval);
+                     scoreElement.classList.add('score-bump');
+                     setTimeout(() => scoreElement.classList.remove('score-bump'), 300);
+                 }
+                 scoreElement.textContent = current;
+             }, 20); // Faster interval
+         }
+
+        function createConfettiEffect(targetElement, count = 150) {
+             // Expanded color palette for more vibrant confetti
+             const colors = [
+                 '#6366F1', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#3B82F6', '#14B8A6',
+                 '#FBBF24', '#FB7185', '#34D399', '#A78BFA', '#38BDF8', '#FB923C', '#F472B6', '#22D3EE'
+             ];
+             const shapes = ['circle', 'square', 'triangle', 'rectangle', 'star']; // Different shapes
+             const rect = targetElement.getBoundingClientRect();
+             const gameRect = gameArea.getBoundingClientRect();
+             
+             // Confetti source position (center of target element relative to gameArea)
+             const sourceX = rect.left - gameRect.left + rect.width / 2;
+             const sourceY = rect.top - gameRect.top + rect.height / 2;
+
+             // Create way more confetti!
+             for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                     const confetti = document.createElement('div');
+                     confetti.className = 'confetti';
+                     
+                     // Random shape selection
+                     const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                     
+                     // Vary size more dramatically
+                     const size = 5 + Math.random() * 15;
+                     confetti.style.width = `${shape === 'rectangle' ? size * 2 : size}px`;
+                     confetti.style.height = `${shape === 'rectangle' ? size : size}px`;
+                     
+                     // Apply different shapes
+                     if (shape === 'triangle') {
+                         confetti.style.width = '0';
+                         confetti.style.height = '0';
+                         confetti.style.backgroundColor = 'transparent';
+                         confetti.style.borderLeft = `${size}px solid transparent`;
+                         confetti.style.borderRight = `${size}px solid transparent`;
+                         confetti.style.borderBottom = `${size * 1.5}px solid ${colors[Math.floor(Math.random() * colors.length)]}`;
+                     } else if (shape === 'star') {
+                         // Star shape using clip-path
+                         confetti.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+                     } else if (shape === 'square' || shape === 'rectangle') {
+                         confetti.style.borderRadius = '2px';
+                     }
+                     
+                     // Add a glint effect to some particles
+                     if (Math.random() > 0.7) {
+                         confetti.style.boxShadow = `0 0 6px 2px rgba(255, 255, 255, 0.8)`;
+                     }
+                     
+                     // Add cool stripes to some confetti
+                     if (Math.random() > 0.8) {
+                         const stripeColor = colors[Math.floor(Math.random() * colors.length)];
+                         confetti.style.backgroundImage = `linear-gradient(45deg, ${stripeColor} 25%, transparent 25%, transparent 50%, ${stripeColor} 50%, ${stripeColor} 75%, transparent 75%)`;
+                         confetti.style.backgroundSize = `${size/2}px ${size/2}px`;
+                     }
+                     
+                     // Position confetti at source
+                     confetti.style.left = `${sourceX}px`;
+                     confetti.style.top = `${sourceY}px`;
+                     
+                     // Generate wildly varying movement patterns
+                     const angle = Math.random() * Math.PI * 2; // Random direction
+                     const velocity = 5 + Math.random() * 15; // Higher speed range
+                     
+                     // Add some curved/spiral trajectories for some particles
+                     const hasSpiralMotion = Math.random() > 0.6;
+                     const spiralFactor = Math.random() * 5 - 2.5;
+                     const wiggleFactor = Math.random() * 10;
+                     
+                     // More erratic motion with physics variables
+                     const gravity = 0.6 + Math.random() * 0.4;
+                     const friction = 0.95 + Math.random() * 0.04;
+                     const spin = Math.random() * 1080 - 540; // More spinning!
+                     
+                     // Random bounces
+                     const bounceFactor = Math.random() > 0.7 ? 0.5 + Math.random() * 0.3 : 0;
+                     
+                     // Longer duration for more spectacle
+                     const duration = 2500 + Math.random() * 2500;
+                     
+                     gameArea.appendChild(confetti);
+
+                     // Create more complex animation with custom keyframes for wild motion
+                     const keyframes = [];
+                     const steps = 20; // More animation steps for smoother, more complex motion
+                     
+                     for (let j = 0; j <= steps; j++) {
+                         const progress = j / steps;
+                         const time = progress * duration / 1000; // Time in seconds
+                         
+                         let x = Math.cos(angle) * velocity * progress * duration / 40;
+                         let y = Math.sin(angle) * velocity * progress * duration / 40 + gravity * time * time * 50;
+                         
+                         // Add spiral motion
+                         if (hasSpiralMotion) {
+                             x += Math.sin(progress * Math.PI * 3) * spiralFactor * progress * 30;
+                             y += Math.cos(progress * Math.PI * 2) * spiralFactor * progress * 30;
+                         }
+                         
+                         // Add wiggle
+                         x += Math.sin(progress * Math.PI * wiggleFactor) * 20 * progress;
+                         
+                         // Apply bounces if enabled
+                         if (bounceFactor > 0 && progress > 0.6) {
+                             y -= Math.abs(Math.sin(progress * Math.PI * 3)) * bounceFactor * 50 * (1 - progress);
+                         }
+                         
+                         // Apply friction
+                         x *= Math.pow(friction, time * 10);
+                         
+                         keyframes.push({
+                             transform: `translate(${x}px, ${y}px) rotate(${spin * progress}deg) scale(${1 - 0.7 * progress})`,
+                             opacity: progress < 0.8 ? 1 - progress * 0.5 : 1 - progress
+                         });
+                     }
+                     
+                     // Apply the complex animation
+                     confetti.animate(keyframes, {
+                         duration: duration,
+                         easing: 'ease-out',
+                         fill: 'forwards'
+                     }).onfinish = () => confetti.remove();
+                     
+                 }, i * (3000 / count)); // Stagger confetti creation over a longer period
+             }
+             
+             // Add some larger special confetti pieces for dramatic effect
+             for (let i = 0; i < count/10; i++) {
+                 setTimeout(() => {
+                     const specialConfetti = document.createElement('div');
+                     specialConfetti.className = 'confetti';
+                     specialConfetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                     
+                     // Larger special pieces
+                     const specialSize = 15 + Math.random() * 20;
+                     specialConfetti.style.width = `${specialSize}px`;
+                     specialConfetti.style.height = `${specialSize}px`;
+                     specialConfetti.style.borderRadius = `${Math.random() > 0.5 ? '50%' : '3px'}`;
+                     specialConfetti.style.boxShadow = `0 0 10px 5px rgba(255, 255, 255, 0.6)`;
+                     specialConfetti.style.opacity = '0.9';
+                     
+                     // Position at source
+                     specialConfetti.style.left = `${sourceX}px`;
+                     specialConfetti.style.top = `${sourceY}px`;
+                     
+                     // Generate dramatic velocity for special pieces
+                     const specialAngle = Math.random() * Math.PI * 2;
+                     const specialVelocity = 20 + Math.random() * 15;
+                     
+                     gameArea.appendChild(specialConfetti);
+                     
+                     // Animate with dramatic motion
+                     specialConfetti.animate([
+                         { transform: 'translate(0, 0) scale(0.3) rotate(0deg)', opacity: 0.9 },
+                         { transform: `translate(${Math.cos(specialAngle) * specialVelocity * 20}px, ${Math.sin(specialAngle) * specialVelocity * 10 - 200}px) scale(1) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0.9, offset: 0.4 },
+                         { transform: `translate(${Math.cos(specialAngle) * specialVelocity * 40}px, ${Math.sin(specialAngle) * specialVelocity * 15}px) scale(0.5) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 }
+                     ], {
+                         duration: 3000 + Math.random() * 2000,
+                         easing: 'cubic-bezier(0.11, 0.67, 0.43, 0.99)'
+                     }).onfinish = () => specialConfetti.remove();
+                 }, i * 200);
+             }
+         }
+
+         function showTemporaryFeedback(message, detail, type = "info") {
+              // Reuse feedback element but maybe change style based on type
+             feedbackElement.classList.remove('hidden');
+             feedbackMessageElement.textContent = message;
+             feedbackDetailElement.textContent = detail;
+
+             // Optional: change border/background based on type (e.g., warning = red/yellow)
+             if (type === "warning") {
+                 feedbackElement.style.borderColor = 'var(--tertiary-color)';
+                 feedbackMessageElement.style.color = 'var(--tertiary-dark)';
+             } else {
+                  feedbackElement.style.borderColor = 'var(--secondary-color)';
+                  feedbackMessageElement.style.color = 'var(--secondary-dark)';
+             }
+
+             // Hide after a delay
+             setTimeout(() => {
+                 feedbackElement.classList.add('hidden');
+             }, 3000);
+         }
+
+         function resetBallToStart(ballElement) {
+             if (!ballElement) return;
+             
+             // For relevance level, find the ball's original position
+             if (gameState.level === 4) {
+                 const ballInfo = gameState.relevanceBalls.find(b => b.element === ballElement);
+                 if (ballInfo) {
+                     gameState.ballX = ballInfo.startX;
+                     gameState.ballY = ballInfo.startY;
+                     gameState.velocityX = 0;
+                     gameState.velocityY = 0;
+                     stopBallTrail();
+                     updateBallPosition(); // Move the ball visually
+                     return;
+                 }
+             }
+             
+             // Default behavior for other levels
+             const startX = 80;
+             const startY = 240; // Assuming this is a common start point
+
+             gameState.ballX = startX;
+             gameState.ballY = startY;
+             gameState.velocityX = 0;
+             gameState.velocityY = 0;
+             stopBallTrail();
+             updateBallPosition(); // Move the ball visually
+         }
+
+
+        // --- Controls ---
+        function restartLevel() {
+            if (gameState.levelComplete && gameState.level > 0) return; // Don't restart if just completed
+            
+            // Play restart sound
+            if (soundManager) {
+                soundManager.play('error');
+            }
+            
+            gameArea.animate([ // Subtle shake effect
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-5px)' },
+                { transform: 'translateX(5px)' },
+                { transform: 'translateX(-3px)' },
+                { transform: 'translateX(3px)' },
+                { transform: 'translateX(0)' }
+            ], { duration: 300, easing: 'ease-in-out' });
+
+            // Update level slightly delayed
+            setTimeout(() => updateLevel(gameState.level), 150);
+        }
+
+        function goToNextLevel() {
+            if (!gameState.levelComplete) return;
+            
+            // Play next level sound
+            if (soundManager) {
+                soundManager.play('button');
+            }
+
+            // Level transition visual
+            const overlay = document.createElement('div');
+            overlay.className = 'level-transition-overlay';
+            const nextLevel = gameState.level + 1;
+            if (nextLevel <= TOTAL_LEVELS) {
+                const nextStandard = standards[nextLevel - 1];
+                overlay.textContent = `Level ${nextLevel}: ${nextStandard.name}`;
+                overlay.style.color = nextStandard.color;
+            }
+            gameArea.appendChild(overlay);
+
+            overlay.animate([
+                { opacity: 0, transform: 'scale(0.8)' },
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 1, transform: 'scale(1)' }, // Hold
+                { opacity: 0, transform: 'scale(1.2)' }
+            ], { duration: 1200, easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' }
+            ).onfinish = () => {
+                overlay.remove();
+                updateLevel(nextLevel);
+            };
+        }
+
+        // --- Helper Functions ---
+        function getLighterColor(hexColor, amount = 40) {
+             hexColor = hexColor.replace('#', '');
+             let r = parseInt(hexColor.slice(0, 2), 16);
+             let g = parseInt(hexColor.slice(2, 4), 16);
+             let b = parseInt(hexColor.slice(4, 6), 16);
+             r = Math.min(255, r + amount);
+             g = Math.min(255, g + amount);
+             b = Math.min(255, b + amount);
+             return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+         function getDarkerColor(hexColor, amount = 40) {
+             hexColor = hexColor.replace('#', '');
+             let r = parseInt(hexColor.slice(0, 2), 16);
+             let g = parseInt(hexColor.slice(2, 4), 16);
+             let b = parseInt(hexColor.slice(4, 6), 16);
+             r = Math.max(0, r - amount);
+             g = Math.max(0, g - amount);
+             b = Math.max(0, b - amount);
+             return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+         }
+
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // --- Initialize ---
+        // Replace the existing initialization
+        window.addEventListener('load', () => {
+            adjustForMobile();
+            initGame();
+        });
+
+        // Update score display when attempts change
+        function updateAttemptsDisplay() {
+            document.getElementById('score-display').textContent = `Score: ${gameState.score} | Shots: ${gameState.attempts}`;
+        }
+
+    </script>
+</body>
+</html>
