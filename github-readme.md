@@ -1,6 +1,6 @@
 # Bubbles: Mind Physics
 
-![Bubbles Banner](https://i.imgur.com/placeholder.png)
+![Bubbles Banner](img/Bubbles.PNG)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![HTML](https://img.shields.io/badge/HTML-5-orange)](https://developer.mozilla.org/en-US/docs/Web/HTML)
